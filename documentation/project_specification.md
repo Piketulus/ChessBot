@@ -1,4 +1,4 @@
-# Project Specifications
+# Project Specification
 
 ### Info
 
