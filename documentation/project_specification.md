@@ -2,7 +2,7 @@
 
 ### Info
 
-* Program: Bachelor's in Science
+* Program: Bachelor's in Science (BSc)
 * Programming language: Java
 * Documentation language: English
 
