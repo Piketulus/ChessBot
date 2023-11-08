@@ -2,7 +2,7 @@
 
 Project for Algorithms and AI Lab course using Tiralabra [chess](https://github.com/TiraLabra/chess) project base.
 
-Code added by me will be contained in *src/main/java/datastructureproject*
+Code added by me will be contained in [*src/main/java/datastructureproject*](src/main/java/datastructureproject) and their tests in [*src/test/java/datastructureproject*](src/test/java/datastructureproject)
 
 ### Documentation
 
