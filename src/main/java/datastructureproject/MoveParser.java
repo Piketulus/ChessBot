@@ -2,48 +2,38 @@ package datastructureproject;
 
 
 /**
- * Move class is an object for the moves made in the game.
- * It stores the move as a UCI string and has methods for getting the move's starting and ending coordinates.
+ * Move class contains methods for parsing moves in UCI format.
  */
-public class Move {
+public class MoveParser {
 
-    private String move;
 
-    public Move(String move) {
-        this.move = move;
-    }
-
-    public String getMove() {
-        return this.move;
-    }
-
-    public int getFromRow() {
+    public int getFromRow(String move) {
         //take the first number from the move string and subtract 1 from it
-        return Character.getNumericValue(this.move.charAt(1)) - 1;
+        return Character.getNumericValue(move.charAt(1)) - 1;
     }
 
 
-    public int getFromCol() {
+    public int getFromCol(String move) {
         //take the first letter from the move string and convert it to a number
-        return letterToNumber(this.move.charAt(0));
+        return letterToNumber(move.charAt(0));
     }
 
-    public int getToRow() {
+    public int getToRow(String move) {
         //take the second number from the move string and subtract 1 from it
-        return Character.getNumericValue(this.move.charAt(3)) - 1;
+        return Character.getNumericValue(move.charAt(3)) - 1;
     }
 
-    public int getToCol() {
+    public int getToCol(String move) {
         //take the second letter from the move string and convert it to a number
-        return letterToNumber(this.move.charAt(2));
+        return letterToNumber(move.charAt(2));
     }
 
-    public boolean isPromotion() {
+    public boolean isPromotion(String move) {
         //check if the move is a promotion
-        return this.move.length() == 5;
+        return move.length() == 5;
     }
 
-    public PieceType getPromotionPiece() {
+    public PieceType getPromotionPiece(String move) {
         //return the promotion piece
         switch (move.charAt(4)) {
             case 'q':

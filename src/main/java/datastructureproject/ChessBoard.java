@@ -48,36 +48,38 @@ public class ChessBoard {
      * Expects given move to be valid (does not check for validity)
      * @param move a Move object containing the move in UCI format
      */
-    public void makeMove(Move move) {
+    public void makeMove(String move) {
+        
+        MoveParser mp = new MoveParser();
 
-        if (move.isPromotion()) { //special case for promotion
-            Piece piece = new Piece(move.getPromotionPiece(), this.getPiece(move.getFromRow(), move.getFromCol()).getSide());
-            this.setPiece(move.getToRow(), move.getToCol(), piece);
-            this.removePiece(move.getFromRow(), move.getFromCol());
+        if (mp.isPromotion(move)) { //special case for promotion
+            Piece piece = new Piece(mp.getPromotionPiece(move), this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getSide());
+            this.setPiece(mp.getToRow(move), mp.getToCol(move), piece);
+            this.removePiece(mp.getFromRow(move), mp.getFromCol(move));
             piece.setHasMoved();
             return;
         
         //special cases for castling moves:
 
-        } else if (move.getMove().equals("e1c1") && this.getPiece(0, 4).getType() == PieceType.KING) {
+        } else if (move.equals("e1c1") && this.getPiece(0, 4).getType() == PieceType.KING) {
             //move the rook from a1 to d1
             Piece piece = this.getPiece(0, 0);
             this.setPiece(0, 3, piece);
             this.removePiece(0, 0);
             piece.setHasMoved();
-        } else if (move.getMove().equals("e1g1") && this.getPiece(0, 4).getType() == PieceType.KING) {
+        } else if (move.equals("e1g1") && this.getPiece(0, 4).getType() == PieceType.KING) {
             //move the rook from h1 to f1
             Piece piece = this.getPiece(0, 7);
             this.setPiece(0, 5, piece);
             this.removePiece(0, 7);
             piece.setHasMoved();
-        } else if (move.getMove().equals("e8c8") && this.getPiece(7, 4).getType() == PieceType.KING) {
+        } else if (move.equals("e8c8") && this.getPiece(7, 4).getType() == PieceType.KING) {
             //move the rook from a8 to d8
             Piece piece = this.getPiece(7, 0);
             this.setPiece(7, 3, piece);
             this.removePiece(7, 0);
             piece.setHasMoved();
-        } else if (move.getMove().equals("e8g8") && this.getPiece(7, 4).getType() == PieceType.KING) {
+        } else if (move.equals("e8g8") && this.getPiece(7, 4).getType() == PieceType.KING) {
             //move the rook from h8 to f8
             Piece piece = this.getPiece(7, 7);
             this.setPiece(7, 5, piece);
@@ -85,16 +87,16 @@ public class ChessBoard {
             piece.setHasMoved();
         }
 
-        Piece piece = this.getPiece(move.getFromRow(), move.getFromCol());
-        this.setPiece(move.getToRow(), move.getToCol(), piece);
-        this.removePiece(move.getFromRow(), move.getFromCol());
+        Piece piece = this.getPiece(mp.getFromRow(move), mp.getFromCol(move));
+        this.setPiece(mp.getToRow(move), mp.getToCol(move), piece);
+        this.removePiece(mp.getFromRow(move), mp.getFromCol(move));
         if (!piece.getHasMoved()) {
             piece.setHasMoved();
         }
     }
 
-    public void makeMoves(Move[] moves) {
-        for (Move move : moves) {
+    public void makeMoves(String[] moves) {
+        for (String move : moves) {
             this.makeMove(move);
         }
     }
