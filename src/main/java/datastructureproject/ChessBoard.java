@@ -10,10 +10,12 @@ import chess.model.Side;
 public class ChessBoard {
 
     private Piece[][] board;
+    private String enpassantable;
 
 
     public ChessBoard() {
         this.board = new Piece[8][8];
+        this.enpassantable = "";
         this.addWhitePieces();
         this.addBlackPieces();
     }
@@ -24,6 +26,10 @@ public class ChessBoard {
 
     public void setBoard(Piece[][] board) {
         this.board = board;
+    }
+
+    public String getEnpassantable() {
+        return this.enpassantable;
     }
 
     public Piece getPiece(int row, int col) {
@@ -52,16 +58,20 @@ public class ChessBoard {
         
         MoveParser mp = new MoveParser();
 
-        if (mp.isPromotion(move)) { //special case for promotion
-            Piece piece = new Piece(mp.getPromotionPiece(move), this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getSide());
+        //special case for promotion:
+
+        if (mp.isPromotion(move)) { 
+            Piece piece = new Piece(mp.getPromotionPiece(move), 
+                                    this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getSide());
             this.setPiece(mp.getToRow(move), mp.getToCol(move), piece);
             this.removePiece(mp.getFromRow(move), mp.getFromCol(move));
             piece.setHasMoved();
             return;
-        
+        } 
+
         //special cases for castling moves:
 
-        } else if (move.equals("e1c1") && this.getPiece(0, 4).getType() == PieceType.KING) {
+        if (move.equals("e1c1") && this.getPiece(0, 4).getType() == PieceType.KING) {
             //move the rook from a1 to d1
             Piece piece = this.getPiece(0, 0);
             this.setPiece(0, 3, piece);
@@ -84,7 +94,31 @@ public class ChessBoard {
             Piece piece = this.getPiece(7, 7);
             this.setPiece(7, 5, piece);
             this.removePiece(7, 7);
-            piece.setHasMoved();
+            piece.setHasMoved();                
+        }
+        
+        //special case for en passant:
+
+        if (!this.enpassantable.equals("")) {
+            if (move.charAt(0) != move.charAt(2) 
+                && move.charAt(1) == enpassantable.charAt(1) 
+                && move.charAt(2) == enpassantable.charAt(0) 
+                && this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getType() == PieceType.PAWN) {
+
+                this.removePiece(mp.getFromRow(move), mp.getToCol(move));
+            }
+        }
+
+        //set enpassantable piece:
+
+        if (this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getType() == PieceType.PAWN 
+            && Math.abs(mp.getFromRow(move) - mp.getToRow(move)) == 2) {
+
+            this.enpassantable = move.substring(2);
+
+        } else {
+            //reset after any move that is not a double pawn move
+            this.enpassantable = "";
         }
 
         Piece piece = this.getPiece(mp.getFromRow(move), mp.getFromCol(move));

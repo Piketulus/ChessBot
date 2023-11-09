@@ -99,4 +99,14 @@ public class ChessBoardTest {
         assertEquals(PieceType.ROOK, board.getPiece(0, 5).getType());
     }
 
+    @Test
+    public void testEnPassant() {
+        String[] moves = {"e2e4", "a7a6", "e4e5", "f7f5"};
+        board.makeMoves(moves);
+        assertEquals("f5", board.getEnpassantable());
+        board.makeMove("e5f6");
+        assertEquals(PieceType.PAWN, board.getPiece(5, 5).getType());
+        assertEquals(null, board.getPiece(4, 5));
+    }
+
 }
