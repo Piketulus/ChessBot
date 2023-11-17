@@ -7,33 +7,33 @@ package datastructureproject;
 public class MoveParser {
 
 
-    public int getFromRow(String move) {
+    public static int getFromRow(String move) {
         //take the first number from the move string and subtract 1 from it
         return Character.getNumericValue(move.charAt(1)) - 1;
     }
 
 
-    public int getFromCol(String move) {
+    public static int getFromCol(String move) {
         //take the first letter from the move string and convert it to a number
         return letterToNumber(move.charAt(0));
     }
 
-    public int getToRow(String move) {
+    public static int getToRow(String move) {
         //take the second number from the move string and subtract 1 from it
         return Character.getNumericValue(move.charAt(3)) - 1;
     }
 
-    public int getToCol(String move) {
+    public static int getToCol(String move) {
         //take the second letter from the move string and convert it to a number
         return letterToNumber(move.charAt(2));
     }
 
-    public boolean isPromotion(String move) {
+    public static boolean isPromotion(String move) {
         //check if the move is a promotion
         return move.length() == 5;
     }
 
-    public PieceType getPromotionPiece(String move) {
+    public static PieceType getPromotionPiece(String move) {
         //return the promotion piece
         switch (move.charAt(4)) {
             case 'q':
@@ -50,7 +50,7 @@ public class MoveParser {
     }
 
 
-    public int letterToNumber(char letter) {
+    public static int letterToNumber(char letter) {
         switch (letter) {
             case 'a':
                 return 0;

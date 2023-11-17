@@ -55,16 +55,14 @@ public class ChessBoard {
      * @param move a Move object containing the move in UCI format
      */
     public void makeMove(String move) {
-        
-        MoveParser mp = new MoveParser();
 
         //special case for promotion:
 
-        if (mp.isPromotion(move)) { 
-            Piece piece = new Piece(mp.getPromotionPiece(move), 
-                                    this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getSide());
-            this.setPiece(mp.getToRow(move), mp.getToCol(move), piece);
-            this.removePiece(mp.getFromRow(move), mp.getFromCol(move));
+        if (MoveParser.isPromotion(move)) { 
+            Piece piece = new Piece(MoveParser.getPromotionPiece(move), 
+                                    this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getSide());
+            this.setPiece(MoveParser.getToRow(move), MoveParser.getToCol(move), piece);
+            this.removePiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
             piece.setHasMoved();
             return;
         } 
@@ -103,16 +101,16 @@ public class ChessBoard {
             if (move.charAt(0) != move.charAt(2) 
                 && move.charAt(1) == enpassantable.charAt(1) 
                 && move.charAt(2) == enpassantable.charAt(0) 
-                && this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getType() == PieceType.PAWN) {
+                && this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() == PieceType.PAWN) {
 
-                this.removePiece(mp.getFromRow(move), mp.getToCol(move));
+                this.removePiece(MoveParser.getFromRow(move), MoveParser.getToCol(move));
             }
         }
 
         //set enpassantable piece:
 
-        if (this.getPiece(mp.getFromRow(move), mp.getFromCol(move)).getType() == PieceType.PAWN 
-            && Math.abs(mp.getFromRow(move) - mp.getToRow(move)) == 2) {
+        if (this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() == PieceType.PAWN 
+            && Math.abs(MoveParser.getFromRow(move) - MoveParser.getToRow(move)) == 2) {
 
             this.enpassantable = move.substring(2);
 
@@ -121,9 +119,9 @@ public class ChessBoard {
             this.enpassantable = "";
         }
 
-        Piece piece = this.getPiece(mp.getFromRow(move), mp.getFromCol(move));
-        this.setPiece(mp.getToRow(move), mp.getToCol(move), piece);
-        this.removePiece(mp.getFromRow(move), mp.getFromCol(move));
+        Piece piece = this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
+        this.setPiece(MoveParser.getToRow(move), MoveParser.getToCol(move), piece);
+        this.removePiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
         if (!piece.getHasMoved()) {
             piece.setHasMoved();
         }
