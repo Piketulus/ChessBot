@@ -11,3 +11,4 @@ Code added by me will be contained in [*src/main/java/datastructureproject*](src
 Weekly reports:
 - [Week 1](./documentation/week1report.md)
 - [Week 2](documentation/week2report.md)
+- [Week 3](documentation/week3report.md)
