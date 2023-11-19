@@ -109,4 +109,44 @@ public class ChessBoardTest {
         assertEquals(null, board.getPiece(4, 5));
     }
 
+    @Test
+    public void testCopyingBoard() {
+        ChessBoard newBoard = new ChessBoard(board);
+        //make move on original board
+        board.makeMove("e2e4");
+        //make sure move istn on new board
+        assertEquals(PieceType.PAWN, newBoard.getPiece(1, 4).getType());
+        assertEquals(null, newBoard.getPiece(3, 4));
+        //make move on new board
+        newBoard.makeMove("a2a4");
+        //make sure move isnt on original board
+        assertEquals(PieceType.PAWN, board.getPiece(1, 0).getType());
+        assertEquals(null, board.getPiece(3, 0));
+
+    }
+
+    /*
+    @Test
+    public void testUnMakeLastMove1() {
+        String[] moves = {"e2e4", "e7e5", "g1f3", "g8f6", "f1c4", "f8c5", "e1g1", "e8g8"};
+        board.makeMoves(moves);
+        System.out.println(board.previousBoard[6][0].getType());
+        board.unMakeLastMove();
+        System.out.println(board.getBoard()[7][4].getType());
+        assertEquals(PieceType.KING, board.getPiece(7, 4).getType());
+        assertEquals(PieceType.ROOK, board.getPiece(7, 7).getType());
+        assertFalse(board.getPiece(7, 4).getHasMoved());
+        assertFalse(board.getPiece(7, 7).getHasMoved());
+    }
+
+    @Test
+    public void testUnMakeLastMove2() {
+        String move = "a2a3";
+        board.makeMove(move);
+        board.unMakeLastMove();
+        assertEquals(PieceType.PAWN, board.getPiece(1, 0).getType());
+        assertEquals(null, board.getPiece(2, 0));
+        assertFalse(board.getPiece(1, 0).getHasMoved());
+    }
+    */
 }

@@ -12,12 +12,25 @@ public class ChessBoard {
     private Piece[][] board;
     private String enpassantable;
 
+    //public Piece[][] previousBoard;
+    //public String previousEnpassantable;
+
 
     public ChessBoard() {
         this.board = new Piece[8][8];
         this.enpassantable = "";
+        //this.previousBoard = new Piece[8][8];
+        //this.previousEnpassantable = "";
         this.addWhitePieces();
         this.addBlackPieces();
+    }
+
+    public ChessBoard(ChessBoard other) {
+        this.board = new Piece[8][8];
+        for (int i = 0; i < 8; i++) {
+            System.arraycopy(other.getBoard()[i], 0, this.board[i], 0, 8);
+        }
+        this.enpassantable = other.getEnpassantable();
     }
 
     public Piece[][] getBoard() {
@@ -30,6 +43,10 @@ public class ChessBoard {
 
     public String getEnpassantable() {
         return this.enpassantable;
+    }
+
+    public void setEnpassantable(String enpassantable) {
+        this.enpassantable = enpassantable;
     }
 
     public Piece getPiece(int row, int col) {
@@ -55,6 +72,13 @@ public class ChessBoard {
      * @param move a Move object containing the move in UCI format
      */
     public void makeMove(String move) {
+
+        //throw exception if starting location is empty
+        if (this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)) == null) {
+            throw new IllegalArgumentException("Starting location is empty");
+        }
+
+        //this.setPreviousBoard();
 
         //special case for promotion:
 
@@ -134,6 +158,28 @@ public class ChessBoard {
         }
     }
 
+    /*
+    public void setPreviousBoard() {
+        //set previous board and enpassantable:
+        this.previousBoard = new Piece[8][8];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (this.board[i][j] == null) {
+                    this.previousBoard[i][j] = null;
+                } else {
+                    this.previousBoard[i][j] = new Piece(this.board[i][j]);
+                }
+            }
+        }
+        this.previousEnpassantable = this.getEnpassantable();
+    }
+    
+
+    public void unMakeLastMove() {
+        this.setBoard(previousBoard);
+        this.setEnpassantable(previousEnpassantable);
+    }
+    */
 
     private void addWhitePieces() {
         //Adds white pieces to the board

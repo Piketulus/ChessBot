@@ -32,8 +32,20 @@ public class MoveGeneratorTest {
 
     @Test
     public void testGetMoves() {
-        ArrayList<String> moves = mg.getMoves();
-        assertEquals(20, moves.size());
+        String[] moves = {"e2e4", "d7d5", "f1b5"};
+        board.makeMoves(moves);
+        mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), Side.BLACK);
+        ArrayList<String> responses = mg.getMoves();
+        assertEquals(5, responses.size());
+    }
+
+    @Test
+    public void testCheckmate() {
+        String[] moves = {"e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6", "h5f7"};
+        board.makeMoves(moves);
+        mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), Side.BLACK);
+        ArrayList<String> responses = mg.getMoves();
+        assertEquals(0, responses.size());
     }
     
 }

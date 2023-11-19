@@ -34,6 +34,13 @@ public class Piece {
         }
     }
 
+    public Piece(Piece other) {
+        this.type = other.getType();
+        this.side = other.getSide();
+        this.hasMoved = other.getHasMoved();
+        this.value = other.getValue();
+    }
+
     public PieceType getType() {
         return this.type;
     }
@@ -52,6 +59,10 @@ public class Piece {
 
     public void setHasMoved() {
         this.hasMoved = true;
+    }
+
+    public void setHasNotMoved() {
+        this.hasMoved = false;
     }
 
 }

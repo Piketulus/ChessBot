@@ -46,4 +46,11 @@ public class PieceTest {
         assertTrue(piece.getHasMoved());
     }
 
+    @Test
+    public void testSetHasNotMoved() {
+        piece.setHasMoved();
+        piece.setHasNotMoved();
+        assertFalse(piece.getHasMoved());
+    }
+
 }
