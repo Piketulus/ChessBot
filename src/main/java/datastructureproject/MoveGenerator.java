@@ -1,6 +1,7 @@
 package datastructureproject;
 
 import java.util.ArrayList;
+
 import chess.model.Side;
 
 
@@ -16,6 +17,10 @@ public class MoveGenerator {
     private Side sideToMove;
 
     private ArrayList<long[]> pinnedPieces; // [0] = rowPinned, [1] = colPinned, [2] = legal move 'ray'
+
+    private int kingInCheck; // 0 = not in check, 1 = in check, 2 = double check
+    private long attackers; // bitboard of attackers
+    private long inCheckLegalMoves; // bitboard of legal moves when in check
 
     public long whitePieces = 0L;
     public long blackPieces = 0L;
@@ -39,7 +44,94 @@ public class MoveGenerator {
         this.enpassantable = enpassantable;
         this.sideToMove = sideToMove;
         this.pinnedPieces = new ArrayList<>();
+
         this.fillBitboards();
+
+        this.kingInCheck = this.kingInCheck();
+        this.attackers = this.checkAttackers();
+        this.getPinnedPieces();
+
+        if (this.kingInCheck == 1) {
+            this.inCheckLegalMoves = this.getLegalMovesForNonKingPiecesWhenChecked(this.attackers);
+        }
+    }
+
+
+    /**
+     * The one method to be called from outside the class to get the legal moves for the current board state.
+     * @return ArrayList of legal moves in UCI string format
+     */
+    public ArrayList<String> getMoves() {
+
+        ArrayList<String> legalMoves = new ArrayList<>();
+
+        boolean inCheck = this.kingInCheck == 1;
+
+        // if the king is in double check then only king moves are legal
+        if (this.kingInCheck == 2) {
+            ArrayList<int[]> kingCoords = getCoordinatesFromBitboard(this.sideToMove == Side.WHITE ? this.whiteKing : this.blackKing);
+            int kingRow = kingCoords.get(0)[0];
+            int kingCol = kingCoords.get(0)[1];
+            long kingMoves = this.getKingMovesBitBoard(kingRow, kingCol);
+            ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
+            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(kingRow, kingCol, kingMovesCoords);
+            legalMoves.addAll(kingMovesUCI);
+        } else {
+            //loop through the board and find all legal moves for each piece and add them to the legalMoves list
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    if (this.board[row][col] != null && this.board[row][col].getSide() == this.sideToMove) {
+                        boolean pinned = this.isPinned(row, col);
+                        if (this.board[row][col].getType() == PieceType.PAWN) {
+                            long pawnMoves = this.getPawnMovesBitBoard(row, col, inCheck, pinned);
+                            ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
+                            ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(row, col, pawnMovesCoords);
+                            legalMoves.addAll(pawnMovesUCI);
+                        } else if (this.board[row][col].getType() == PieceType.KNIGHT) {
+                            long knightMoves = this.getKnightMovesBitBoard(row, col, inCheck, pinned);
+                            ArrayList<int[]> knightMovesCoords = getCoordinatesFromBitboard(knightMoves);
+                            ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(row, col, knightMovesCoords);
+                            legalMoves.addAll(knightMovesUCI);
+                        } else if (this.board[row][col].getType() == PieceType.BISHOP) {
+                            long bishopMoves = this.getBishopMovesBitBoard(row, col, inCheck, pinned);
+                            ArrayList<int[]> bishopMovesCoords = getCoordinatesFromBitboard(bishopMoves);
+                            ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(row, col, bishopMovesCoords);
+                            legalMoves.addAll(bishopMovesUCI);
+                        } else if (this.board[row][col].getType() == PieceType.ROOK) {
+                            long rookMoves = this.getRookMovesBitBoard(row, col, inCheck, pinned);
+                            ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
+                            ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(row, col, rookMovesCoords);
+                            legalMoves.addAll(rookMovesUCI);
+                        } else if (this.board[row][col].getType() == PieceType.QUEEN) {
+                            long queenMoves = this.getQueenMovesBitBoard(row, col, inCheck, pinned);
+                            ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
+                            ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(row, col, queenMovesCoords);
+                            legalMoves.addAll(queenMovesUCI);
+                        } else if (this.board[row][col].getType() == PieceType.KING) {
+                            long kingMoves = this.getKingMovesBitBoard(row, col);
+                            ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
+                            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(row, col, kingMovesCoords);
+                            legalMoves.addAll(kingMovesUCI);
+                        }
+                    }
+                }
+            }
+        }
+        
+
+        return legalMoves;
+        
+    }
+
+
+    private boolean isPinned(int row, int col) {
+        //check if the piece is pinned by seeing if row and col match any of the pinned pieces
+        for (long[] pinnedPiece : this.pinnedPieces) {
+            if (pinnedPiece[0] == row && pinnedPiece[1] == col) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -69,15 +161,15 @@ public class MoveGenerator {
         long attackers = 0L;
 
         if (this.sideToMove == Side.WHITE) {
-            attackers = (this.getBishopMovesBitBoard(kingRow, kingCol) & this.blackBishops & this.blackQueens)
-                | (this.getRookMovesBitBoard(kingRow, kingCol) & this.blackRooks & this.blackQueens)
-                | (this.getKnightMovesBitBoard(kingRow, kingCol) & this.blackKnights)
-                | (this.getPawnMovesBitBoard(kingRow, kingCol) & this.blackPawns);
+            attackers = (this.getBishopMovesBitBoard(kingRow, kingCol, false, false) & this.blackBishops & this.blackQueens)
+                | (this.getRookMovesBitBoard(kingRow, kingCol, false, false) & this.blackRooks & this.blackQueens)
+                | (this.getKnightMovesBitBoard(kingRow, kingCol, false, false) & this.blackKnights)
+                | (this.getPawnMovesBitBoard(kingRow, kingCol, false, false) & this.blackPawns);
         } else {
-            attackers = (this.getBishopMovesBitBoard(kingRow, kingCol) & this.whiteBishops & this.whiteQueens)
-                | (this.getRookMovesBitBoard(kingRow, kingCol) & this.whiteRooks & this.whiteQueens)
-                | (this.getKnightMovesBitBoard(kingRow, kingCol) & this.whiteKnights)
-                | (this.getPawnMovesBitBoard(kingRow, kingCol) & this.whitePawns);
+            attackers = (this.getBishopMovesBitBoard(kingRow, kingCol, false, false) & this.whiteBishops & this.whiteQueens)
+                | (this.getRookMovesBitBoard(kingRow, kingCol, false, false) & this.whiteRooks & this.whiteQueens)
+                | (this.getKnightMovesBitBoard(kingRow, kingCol, false, false) & this.whiteKnights)
+                | (this.getPawnMovesBitBoard(kingRow, kingCol, false, false) & this.whitePawns);
         }
 
         return attackers;
@@ -101,21 +193,21 @@ public class MoveGenerator {
 
         this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
 
-        kingSlidingMoves = this.getQueenMovesBitBoard(kingRow, kingCol);
+        kingSlidingMoves = this.getQueenMovesBitBoard(kingRow, kingCol, false, false);
 
         long opponentSlidingMoves = 0L;
 
         ArrayList<int[]> opponentRookCoords = getCoordinatesFromBitboard(this.sideToMove == Side.WHITE ? this.whiteRooks : this.blackRooks);
         for (int[] coords : opponentRookCoords) {
-            opponentSlidingMoves |= this.getRookMovesBitBoard(coords[0], coords[1]);
+            opponentSlidingMoves |= this.getRookMovesBitBoard(coords[0], coords[1], false, false);
         }
         ArrayList<int[]> opponentBishopCoords = getCoordinatesFromBitboard(this.sideToMove == Side.WHITE ? this.whiteBishops : this.blackBishops);
         for (int[] coords : opponentBishopCoords) {
-            opponentSlidingMoves |= this.getBishopMovesBitBoard(coords[0], coords[1]);
+            opponentSlidingMoves |= this.getBishopMovesBitBoard(coords[0], coords[1], false, false);
         }
         ArrayList<int[]> opponentQueenCoords = getCoordinatesFromBitboard(this.sideToMove == Side.WHITE ? this.whiteQueens : this.blackQueens);
         for (int[] coords : opponentQueenCoords) {
-            opponentSlidingMoves |= this.getQueenMovesBitBoard(coords[0], coords[1]);
+            opponentSlidingMoves |= this.getQueenMovesBitBoard(coords[0], coords[1], false, false);
         }
 
         long pinnedPieces = kingSlidingMoves & opponentSlidingMoves;
@@ -181,19 +273,19 @@ public class MoveGenerator {
         long legalMoves = 0L;
 
         if (this.board[attackerRow][attackerCol].getType() == PieceType.ROOK) {
-            legalMoves = this.getRookMovesBitBoard(kingRow, kingCol);
+            legalMoves = this.getRookMovesBitBoard(kingRow, kingCol, false, false);
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
-            legalMoves &= this.getRookMovesBitBoard(attackerRow, attackerCol) | attacker;
+            legalMoves &= this.getRookMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
         } else if (this.board[attackerRow][attackerCol].getType() == PieceType.BISHOP) {
-            legalMoves = this.getBishopMovesBitBoard(kingRow, kingCol);
+            legalMoves = this.getBishopMovesBitBoard(kingRow, kingCol, false, false);
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
-            legalMoves &= this.getBishopMovesBitBoard(attackerRow, attackerCol) | attacker;
+            legalMoves &= this.getBishopMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
         } else if (this.board[attackerRow][attackerCol].getType() == PieceType.QUEEN) {
-            legalMoves = this.getQueenMovesBitBoard(kingRow, kingCol);
+            legalMoves = this.getQueenMovesBitBoard(kingRow, kingCol, false, false);
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
-            legalMoves &= this.getQueenMovesBitBoard(attackerRow, attackerCol) | attacker;
+            legalMoves &= this.getQueenMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
             this.sideToMove = this.sideToMove == Side.WHITE ? Side.BLACK : Side.WHITE;
         } else if (this.board[attackerRow][attackerCol].getType() == PieceType.KNIGHT) {
             legalMoves = attacker;
@@ -215,64 +307,72 @@ public class MoveGenerator {
             if (row + 1 < 8) {
                 if (((this.whitePieces >> ((row + 1) * 8 + col)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col))
+                        if (!this.kingInCheckAfterMove(row + 1, col)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0) {
                 if (((this.whitePieces >> ((row - 1) * 8 + col)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col))
+                        if (!this.kingInCheckAfterMove(row - 1, col)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col);
+                        }
                     }
                 }
             }
             if (col + 1 < 8) {
                 if (((this.whitePieces >> (row * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> (row * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row, col + 1))
+                        if (!this.kingInCheckAfterMove(row, col + 1)) {
                             kingmoves |= 1L << (row * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (col - 1 >= 0) {
                 if (((this.whitePieces >> (row * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> (row * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row, col - 1))
+                        if (!this.kingInCheckAfterMove(row, col - 1)) {
                             kingmoves |= 1L << (row * 8 + col - 1);
+                        }
                     }
                 }
             }
             if (row + 1 < 8 && col + 1 < 8) {
                 if (((this.whitePieces >> ((row + 1) * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col + 1))
+                        if (!this.kingInCheckAfterMove(row + 1, col + 1)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (row + 1 < 8 && col - 1 >= 0) {
                 if (((this.whitePieces >> ((row + 1) * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col - 1))
+                        if (!this.kingInCheckAfterMove(row + 1, col - 1)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col - 1);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0 && col + 1 < 8) {
                 if (((this.whitePieces >> ((row - 1) * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col + 1))
+                        if (!this.kingInCheckAfterMove(row - 1, col + 1)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0 && col - 1 >= 0) {
                 if (((this.whitePieces >> ((row - 1) * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col - 1))
+                        if (!this.kingInCheckAfterMove(row - 1, col - 1)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col - 1);
+                        }
                     }
                 }
             }
@@ -280,70 +380,135 @@ public class MoveGenerator {
             if (row + 1 < 8) {
                 if (((this.blackPieces >> ((row + 1) * 8 + col)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col))
+                        if (!this.kingInCheckAfterMove(row + 1, col)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0) {
                 if (((this.blackPieces >> ((row - 1) * 8 + col)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col))
+                        if (!this.kingInCheckAfterMove(row - 1, col)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col);
+                        }
                     }
                 }
             }
             if (col + 1 < 8) {
                 if (((this.blackPieces >> (row * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> (row * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row, col + 1))
+                        if (!this.kingInCheckAfterMove(row, col + 1)) {
                             kingmoves |= 1L << (row * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (col - 1 >= 0) {
                 if (((this.blackPieces >> (row * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> (row * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row, col - 1))
+                        if (!this.kingInCheckAfterMove(row, col - 1)) {
                             kingmoves |= 1L << (row * 8 + col - 1);
+                        }
                     }
                 }
             }
             if (row + 1 < 8 && col + 1 < 8) {
                 if (((this.blackPieces >> ((row + 1) * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col + 1))
+                        if (!this.kingInCheckAfterMove(row + 1, col + 1)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (row + 1 < 8 && col - 1 >= 0) {
                 if (((this.blackPieces >> ((row + 1) * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row + 1) * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row + 1, col - 1))
+                        if (!this.kingInCheckAfterMove(row + 1, col - 1)) {
                             kingmoves |= 1L << ((row + 1) * 8 + col - 1);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0 && col + 1 < 8) {
                 if (((this.blackPieces >> ((row - 1) * 8 + col + 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col + 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col + 1))
+                        if (!this.kingInCheckAfterMove(row - 1, col + 1)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col + 1);
+                        }
                     }
                 }
             }
             if (row - 1 >= 0 && col - 1 >= 0) {
                 if (((this.blackPieces >> ((row - 1) * 8 + col - 1)) & 1L) == 0L) {
                     if (((coveredByOppKing >> ((row - 1) * 8 + col - 1)) & 1L) == 0L) {
-                        if (!this.kingInCheckAfterMove(row - 1, col - 1))
+                        if (!this.kingInCheckAfterMove(row - 1, col - 1)) {
                             kingmoves |= 1L << ((row - 1) * 8 + col - 1);
+                        }
                     }
                 }
             }
         }
 
-        // Check for castling moves
+        // check if king is in check so need to find castling moves
+        if (this.kingInCheck > 0) {
+            return kingmoves;
+        }
+
+        //if king is not in check then check for castling moves
+        if (this.sideToMove == Side.WHITE) {
+            if (row == 0 && col == 4 && !this.board[0][4].getHasMoved()) {
+                if (this.board[0][7].getType() == PieceType.ROOK && !this.board[0][7].getHasMoved()) {
+                    if (((this.whitePieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 6)) & 1L) == 0L) {
+                        if (((this.blackPieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 6)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (0 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 6)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(0, 5) && !this.kingInCheckAfterMove(0, 6)) {
+                                    kingmoves |= 1L << (0 * 8 + 6);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (this.board[0][0].getType() == PieceType.ROOK && !this.board[0][0].getHasMoved()) {
+                    if (((this.whitePieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 2)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 1)) & 1L) == 0L) {
+                        if (((this.blackPieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 2)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (0 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 2)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(0, 3) && !this.kingInCheckAfterMove(0, 2)) {
+                                    kingmoves |= 1L << (0 * 8 + 2);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        } else {
+            if (row == 7 && col == 4 && !this.board[0][4].getHasMoved()) {
+                if (this.board[7][7].getType() == PieceType.ROOK && !this.board[7][7].getHasMoved()) {
+                    if (((this.blackPieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 6)) & 1L) == 0L) {
+                        if (((this.whitePieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 6)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (7 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 6)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(7, 5) && !this.kingInCheckAfterMove(7, 6)) {
+                                    kingmoves |= 1L << (7 * 8 + 6);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (this.board[7][0].getType() == PieceType.ROOK && !this.board[7][0].getHasMoved()) {
+                    if (((this.blackPieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 2)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 1)) & 1L) == 0L) {
+                        if (((this.whitePieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 2)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (7 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 2)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(7, 3) && !this.kingInCheckAfterMove(7, 2)) {
+                                    kingmoves |= 1L << (7 * 8 + 2);
+                                }
+                            }
+                        }
+                    }
+                }
+            } 
+        }
 
         return kingmoves;
 
@@ -437,7 +602,7 @@ public class MoveGenerator {
     }
 
 
-    private long getPawnMovesBitBoard(int row, int col) {
+    private long getPawnMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long pawnMoves = 0L;
 
         // go straight
@@ -491,48 +656,117 @@ public class MoveGenerator {
         }
 
         // en passant
-        if (this.sideToMove == Side.WHITE) {
-            if (row == 4) {
-                if (col - 1 >= 0) {
-                    if (((this.blackPawns >> (row * 8 + col - 1)) & 1L) > 0) {
-                        if (MoveParser.getFromCol(this.enpassantable) == (col - 1) && MoveParser.getFromRow(this.enpassantable) == row) {
-                            pawnMoves |= 1L << ((row + 1) * 8 + col - 1);
+        if (!this.enpassantable.equals("")) {
+
+            if (this.sideToMove == Side.WHITE) {
+                if (row == 4) {
+                    if (col - 1 >= 0) {
+                        if (((this.blackPawns >> (row * 8 + col - 1)) & 1L) > 0) {
+                            if (MoveParser.getFromCol(this.enpassantable) == (col - 1) && MoveParser.getFromRow(this.enpassantable) == row) {
+                                if (!this.enPassantLeadsToCheck(row, col, -1, 1)) {
+                                    pawnMoves |= 1L << ((row + 1) * 8 + col - 1);
+                                }
+                            }
+                        }
+                    }
+                    if (col + 1 < 8) {
+                        if (((this.blackPawns >> (row * 8 + col + 1)) & 1L) > 0) {
+                            if (MoveParser.getFromCol(this.enpassantable) == (col + 1) && MoveParser.getFromRow(this.enpassantable) == row) {
+                                if (!this.enPassantLeadsToCheck(row, col, 1, 1)) {
+                                    pawnMoves |= 1L << ((row + 1) * 8 + col + 1);
+                                }
+                            }
                         }
                     }
                 }
-                if (col + 1 < 8) {
-                    if (((this.blackPawns >> (row * 8 + col + 1)) & 1L) > 0) {
-                        if (MoveParser.getFromCol(this.enpassantable) == (col + 1) && MoveParser.getFromRow(this.enpassantable) == row) {
-                            pawnMoves |= 1L << ((row + 1) * 8 + col + 1);
+            } else {
+                if (row == 3) {
+                    if (col - 1 >= 0) {
+                        if (((this.whitePawns >> (row * 8 + col - 1)) & 1L) > 0) {
+                            if (MoveParser.getFromCol(this.enpassantable) == (col - 1) && MoveParser.getFromRow(this.enpassantable) == row) {
+                                if (!this.enPassantLeadsToCheck(row, col, -1, -1)) {
+                                    pawnMoves |= 1L << ((row - 1) * 8 + col - 1);
+                                }
+                            }
                         }
                     }
-                }
-            }
-        } else {
-            if (row == 3) {
-                if (col - 1 >= 0) {
-                    if (((this.whitePawns >> (row * 8 + col - 1)) & 1L) > 0) {
-                        if (MoveParser.getFromCol(this.enpassantable) == (col - 1) && MoveParser.getFromRow(this.enpassantable) == row) {
-                            pawnMoves |= 1L << ((row - 1) * 8 + col - 1);
-                        }
-                    }
-                }
-                if (col + 1 < 8) {
-                    if (((this.whitePawns >> (row * 8 + col + 1)) & 1L) > 0) {
-                        if (MoveParser.getFromCol(this.enpassantable) == (col + 1) && MoveParser.getFromRow(this.enpassantable) == row) {
-                            pawnMoves |= 1L << ((row - 1) * 8 + col + 1);
+                    if (col + 1 < 8) {
+                        if (((this.whitePawns >> (row * 8 + col + 1)) & 1L) > 0) {
+                            if (MoveParser.getFromCol(this.enpassantable) == (col + 1) && MoveParser.getFromRow(this.enpassantable) == row) {
+                                if (!this.enPassantLeadsToCheck(row, col, 1, -1)) {
+                                    pawnMoves |= 1L << ((row - 1) * 8 + col + 1);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        return pawnMoves;
+        if (pinned) {
+            for (long[] pinnedPiece : this.pinnedPieces) {
+                if (pinnedPiece[0] == row && pinnedPiece[1] == col) {
+                    pawnMoves &= pinnedPiece[2];
+                    break;
+                }
+            }
+        }
+
+        if (!inCheck) {
+            return pawnMoves;
+        } else {
+            pawnMoves &= this.inCheckLegalMoves;
+            return pawnMoves;
+        }
+        
+    }
+
+
+    private boolean enPassantLeadsToCheck(int row, int col, int shift, int side) {
+        
+        //remove pawns off the board
+        if (side == 1) {
+            this.whitePawns = this.whitePawns & ~(1L << (row * 8 + col));
+            this.whitePieces = this.whitePieces & ~(1L << (row * 8 + col));
+            this.blackPawns = this.blackPawns & ~(1L << (row * 8 + col + shift));
+            this.blackPieces = this.blackPieces & ~(1L << (row * 8 + col + shift));
+            this.whitePawns |= 1L << ((row + side) * 8 + col + shift);
+            this.whitePieces |= 1L << ((row + side) * 8 + col + shift);
+        } else {
+            this.blackPawns = this.blackPawns & ~(1L << (row * 8 + col));
+            this.blackPieces = this.blackPieces & ~(1L << (row * 8 + col));
+            this.whitePawns = this.whitePawns & ~(1L << (row * 8 + col + shift));
+            this.whitePieces = this.whitePieces & ~(1L << (row * 8 + col + shift));
+            this.blackPawns |= 1L << ((row + side) * 8 + col + shift);
+            this.blackPieces |= 1L << ((row + side) * 8 + col + shift);
+        }
+
+        //check if king is in check
+        int check = this.kingInCheck();
+
+        //put pawns back
+        if (side == 1) {
+            this.whitePawns = this.whitePawns & ~(1L << ((row + side) * 8 + col + shift));
+            this.whitePieces = this.whitePieces & ~(1L << ((row + side) * 8 + col + shift));
+            this.whitePawns |= 1L << (row * 8 + col);
+            this.whitePieces |= 1L << (row * 8 + col);
+            this.blackPawns |= 1L << (row * 8 + col + shift);
+            this.blackPieces |= 1L << (row * 8 + col + shift);
+        } else {
+            this.blackPawns = this.blackPawns & ~(1L << ((row + side) * 8 + col + shift));
+            this.blackPieces = this.blackPieces & ~(1L << ((row + side) * 8 + col + shift));
+            this.blackPawns |= 1L << (row * 8 + col);
+            this.blackPieces |= 1L << (row * 8 + col);
+            this.whitePawns |= 1L << (row * 8 + col + shift);
+            this.whitePieces |= 1L << (row * 8 + col + shift);
+        }
+
+        return check > 0;
 
     }
 
 
-    private long getBishopMovesBitBoard(int row, int col) {
+    private long getBishopMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long bishopMoves = 0L;
 
         // down-left
@@ -619,11 +853,26 @@ public class MoveGenerator {
             }
         }
 
-        return bishopMoves;
+        if (pinned) {
+            for (long[] pinnedPiece : this.pinnedPieces) {
+                if (pinnedPiece[0] == row && pinnedPiece[1] == col) {
+                    bishopMoves &= pinnedPiece[2];
+                    break;
+                }
+            }
+        }
+
+        if (!inCheck) {
+            return bishopMoves;
+        } else {
+            bishopMoves &= this.inCheckLegalMoves;
+            return bishopMoves;
+        }
+
     }
 
 
-    private long getRookMovesBitBoard(int row, int col) {
+    private long getRookMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long rookMoves = 0L;
 
         // down
@@ -710,17 +959,31 @@ public class MoveGenerator {
             }
         }
 
-        return rookMoves;
+        if (pinned) {
+            for (long[] pinnedPiece : this.pinnedPieces) {
+                if (pinnedPiece[0] == row && pinnedPiece[1] == col) {
+                    rookMoves &= pinnedPiece[2];
+                    break;
+                }
+            }
+        }
+
+        if (!inCheck) {
+            return rookMoves;
+        } else {
+            rookMoves &= this.inCheckLegalMoves;
+            return rookMoves;
+        }
 
     }
 
 
-    private long getQueenMovesBitBoard(int row, int col) {
-        return this.getRookMovesBitBoard(row, col) | this.getBishopMovesBitBoard(row, col);
+    private long getQueenMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
+        return this.getRookMovesBitBoard(row, col, inCheck, pinned) | this.getBishopMovesBitBoard(row, col, inCheck, pinned);
     }
 
 
-    private long getKnightMovesBitBoard(int row, int col) {
+    private long getKnightMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long knightMoves = 0L;
 
         if (row - 2 >= 0 && col - 1 >= 0) {
@@ -835,7 +1098,21 @@ public class MoveGenerator {
             }
         }
 
-        return knightMoves;
+        if (pinned) {
+            for (long[] pinnedPiece : this.pinnedPieces) {
+                if (pinnedPiece[0] == row && pinnedPiece[1] == col) {
+                    knightMoves &= pinnedPiece[2];
+                    break;
+                }
+            }
+        }
+
+        if (!inCheck) {
+            return knightMoves;
+        } else {
+            knightMoves &= this.inCheckLegalMoves;
+            return knightMoves;
+        }
         
     }
 
@@ -908,23 +1185,4 @@ public class MoveGenerator {
 
     }
 
-
-    private void resetBitBoards() {
-        this.whitePieces = 0L;
-        this.blackPieces = 0L;
-
-        this.whitePawns = 0L;
-        this.blackPawns = 0L;
-        this.whiteKnights = 0L;
-        this.blackKnights = 0L;
-        this.whiteBishops = 0L;
-        this.blackBishops = 0L;
-        this.whiteRooks = 0L;
-        this.blackRooks = 0L;
-        this.whiteQueens = 0L;
-        this.blackQueens = 0L;
-        this.whiteKing = 0L;
-        this.blackKing = 0L;
-    }
-    
 }

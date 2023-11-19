@@ -101,7 +101,8 @@ public class ChessBoard {
             if (move.charAt(0) != move.charAt(2) 
                 && move.charAt(1) == enpassantable.charAt(1) 
                 && move.charAt(2) == enpassantable.charAt(0) 
-                && this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() == PieceType.PAWN) {
+                && this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() 
+                == PieceType.PAWN) {
 
                 this.removePiece(MoveParser.getFromRow(move), MoveParser.getToCol(move));
             }

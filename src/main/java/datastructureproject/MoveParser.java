@@ -1,8 +1,9 @@
 package datastructureproject;
 
+import java.util.ArrayList;
 
 /**
- * Move class contains methods for parsing moves in UCI format.
+ * Move class contains methods for parsing moves from and to UCI format.
  */
 public class MoveParser {
 
@@ -71,6 +72,44 @@ public class MoveParser {
             default:
                 throw new IllegalArgumentException("Invalid letter: " + letter);
         }
+    }
+
+
+    public static String numberToLetter(int number) {
+        switch (number) {
+            case 0:
+                return "a";
+            case 1:
+                return "b";
+            case 2:
+                return "c";
+            case 3:
+                return "d";
+            case 4:
+                return "e";
+            case 5:
+                return "f";
+            case 6:
+                return "g";
+            default:
+                return "h";
+        }
+    }
+
+
+    /**
+     * Converts given starting coordinates and list of destination coordinates to a list of move strings.
+     * @param fromRow starting row
+     * @param fromCol starting column
+     * @param destinations list of destination coordinates
+     * @return list of move strings
+     */
+    public static ArrayList<String> coordsToMoves(int fromRow, int fromCol, ArrayList<int[]> destinations) {
+        ArrayList<String> moves = new ArrayList<>();
+        for (int[] destination : destinations) {
+            moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1));
+        }
+        return moves;
     }
 
 }

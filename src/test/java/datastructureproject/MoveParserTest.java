@@ -1,59 +1,58 @@
 package datastructureproject;
 
+import java.util.ArrayList;
 import org.junit.*;
 import static org.junit.Assert.*;
 
 
 public class MoveParserTest {
-    
-    MoveParser mp;
-
-    @Before
-    public void setUp() {
-        mp = new MoveParser();
-    }
-
-    @After
-    public void tearDown() {
-        mp = null;
-    }
 
     @Test
     public void testGetFromRow() {
         String move = "a1a2";
-        assertEquals(0, mp.getFromRow(move));
+        assertEquals(0, MoveParser.getFromRow(move));
     }
 
     @Test
     public void testGetFromCol() {
         String move = "a1a2";
-        assertEquals(0, mp.getFromCol(move));
+        assertEquals(0, MoveParser.getFromCol(move));
     }
 
     @Test
     public void testGetToRow() {
         String move = "a1a2";
-        assertEquals(1, mp.getToRow(move));
+        assertEquals(1, MoveParser.getToRow(move));
     }
 
     @Test
     public void testGetToCol() {
         String move = "a1a2";
-        assertEquals(0, mp.getToCol(move));
+        assertEquals(0, MoveParser.getToCol(move));
     }
 
     @Test
     public void testIsPromotion() {
         String move = "a7a8q";
-        assertTrue(mp.isPromotion(move));
+        assertTrue(MoveParser.isPromotion(move));
         String move2 = "a2a3";
-        assertFalse(mp.isPromotion(move2));
+        assertFalse(MoveParser.isPromotion(move2));
     }
 
     @Test
     public void testGetPromotionPiece() {
         String move = "a7a8q";
-        assertEquals(PieceType.QUEEN, mp.getPromotionPiece(move));
+        assertEquals(PieceType.QUEEN, MoveParser.getPromotionPiece(move));
+    }
+
+    @Test
+    public void testCoordsToMove() {
+        int fromRow = 0;
+        int fromCol = 0;
+        ArrayList<int[]> toCoords = new ArrayList<>();
+        toCoords.add(new int[]{1, 0});
+        String move = "a1a2";
+        assertEquals(move, MoveParser.coordsToMoves(fromRow, fromCol, toCoords).get(0));
     }
 
 }
