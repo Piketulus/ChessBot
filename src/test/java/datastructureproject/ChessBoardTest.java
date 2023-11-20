@@ -69,11 +69,6 @@ public class ChessBoardTest {
     }
 
     @Test
-    public void testIsOccupiedBySide() {
-        assertTrue(board.isOccupiedBySide(7, 0, Side.BLACK));
-    }
-
-    @Test
     public void testMakeMove() {
         String move = "a2a3";
         board.makeMove(move);
@@ -125,28 +120,17 @@ public class ChessBoardTest {
 
     }
 
-    /*
     @Test
-    public void testUnMakeLastMove1() {
-        String[] moves = {"e2e4", "e7e5", "g1f3", "g8f6", "f1c4", "f8c5", "e1g1", "e8g8"};
-        board.makeMoves(moves);
-        System.out.println(board.previousBoard[6][0].getType());
-        board.unMakeLastMove();
-        System.out.println(board.getBoard()[7][4].getType());
-        assertEquals(PieceType.KING, board.getPiece(7, 4).getType());
-        assertEquals(PieceType.ROOK, board.getPiece(7, 7).getType());
-        assertFalse(board.getPiece(7, 4).getHasMoved());
-        assertFalse(board.getPiece(7, 7).getHasMoved());
+    public void testFenToBoard() {
+        //use fen "2kr3r/p1ppqpb1/bn2Qnp1/3PN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQ - 3 2"
+        String fen = "2kr3r/p1ppqpb1/bn2Qnp1/3PN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQ - 3 2";
+        board.fenToBoard(fen);
+        //check that bishops and queens are in correct places
+        assertEquals(PieceType.BISHOP, board.getPiece(5, 0).getType());
+        assertEquals(PieceType.BISHOP, board.getPiece(6, 6).getType());
+        assertEquals(PieceType.QUEEN, board.getPiece(5, 4).getType());
+        assertEquals(PieceType.QUEEN, board.getPiece(6, 4).getType());
+
     }
 
-    @Test
-    public void testUnMakeLastMove2() {
-        String move = "a2a3";
-        board.makeMove(move);
-        board.unMakeLastMove();
-        assertEquals(PieceType.PAWN, board.getPiece(1, 0).getType());
-        assertEquals(null, board.getPiece(2, 0));
-        assertFalse(board.getPiece(1, 0).getHasMoved());
-    }
-    */
 }

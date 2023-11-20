@@ -11,7 +11,7 @@ public class ChessBoard {
 
     private Piece[][] board;
     private String enpassantable;
-    
+
 
     public ChessBoard() {
         this.board = new Piece[8][8];
@@ -54,10 +54,6 @@ public class ChessBoard {
 
     public void removePiece(int row, int col) {
         this.board[row][col] = null;
-    }
-
-    public boolean isOccupiedBySide(int row, int col, Side side) {
-        return this.board[row][col] != null && this.board[row][col].getSide() == side;
     }
 
     
@@ -177,6 +173,113 @@ public class ChessBoard {
         for (int i = 0; i < 8; i++) {
             this.board[6][i] = new Piece(PieceType.PAWN, Side.BLACK);
         }
+    }
+
+
+    public void fenToBoard(String fen) {
+        //converts a FEN string to a board
+        this.board = new Piece[8][8];
+
+        String[] fenParts = fen.split(" ");
+
+        //castling rights
+        String castlingRights = fenParts[2];
+        boolean whiteKingSide = castlingRights.contains("K");
+        boolean whiteQueenSide = castlingRights.contains("Q");
+        boolean blackKingSide = castlingRights.contains("k");
+        boolean blackQueenSide = castlingRights.contains("q");
+
+        String[] rows = fenParts[0].split("/");
+        for (int i = 0; i < 8; i++) {
+            int col = 0;
+            for (int j = 0; j < rows[7 - i].length(); j++) {
+                char c = rows[7 - i].charAt(j);
+                if (Character.isDigit(c)) {
+                    col += Character.getNumericValue(c);
+                } else {
+                    switch (c) {
+                        case 'p':
+                            this.board[i][col] = new Piece(PieceType.PAWN, Side.BLACK);
+                            col++;
+                            break;
+                        case 'r':
+                            this.board[i][col] = new Piece(PieceType.ROOK, Side.BLACK);
+                            if (i == 7 && col == 0 && !blackQueenSide) {
+                                this.board[i][col].setHasMoved();
+                            } else if (i == 7 && col == 7 && !blackKingSide) {
+                                this.board[i][col].setHasMoved();
+                            }
+                            col++;
+                            break;
+                        case 'n':
+                            this.board[i][col] = new Piece(PieceType.KNIGHT, Side.BLACK);
+                            col++;
+                            break;
+                        case 'b':
+                            this.board[i][col] = new Piece(PieceType.BISHOP, Side.BLACK);
+                            col++;
+                            break;
+                        case 'q':
+                            this.board[i][col] = new Piece(PieceType.QUEEN, Side.BLACK);
+                            col++;
+                            break;
+                        case 'k':
+                            this.board[i][col] = new Piece(PieceType.KING, Side.BLACK);
+                            if (!blackKingSide && !blackQueenSide) {
+                                this.board[i][col].setHasMoved();
+                            }
+                            col++;
+                            break;
+                        case 'P':
+                            this.board[i][col] = new Piece(PieceType.PAWN, Side.WHITE);
+                            col++;
+                            break;
+                        case 'R':
+                            this.board[i][col] = new Piece(PieceType.ROOK, Side.WHITE);
+                            if (i == 0 && col == 0 && !whiteQueenSide) {
+                                this.board[i][col].setHasMoved();
+                            } else if (i == 0 && col == 7 && !whiteKingSide) {
+                                this.board[i][col].setHasMoved();
+                            }
+                            col++;
+                            break;
+                        case 'N':
+                            this.board[i][col] = new Piece(PieceType.KNIGHT, Side.WHITE);
+                            col++;
+                            break;
+                        case 'B':
+                            this.board[i][col] = new Piece(PieceType.BISHOP, Side.WHITE);
+                            col++;
+                            break;
+                        case 'Q':
+                            this.board[i][col] = new Piece(PieceType.QUEEN, Side.WHITE);
+                            col++;
+                            break;
+                        case 'K':
+                            this.board[i][col] = new Piece(PieceType.KING, Side.WHITE);
+                            if (!whiteKingSide && !whiteQueenSide) {
+                                this.board[i][col].setHasMoved();
+                            }
+                            col++;
+                            break;
+                    }
+                }
+            }
+        }
+        //set enpassantable
+        String toMove = fenParts[1];
+        String enpassantable = fenParts[3];
+
+        if (!enpassantable.equals("-")) {
+            if (toMove.equals("w")) {
+                this.enpassantable = enpassantable.charAt(0) + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) - 1));
+            } else {
+                this.enpassantable = enpassantable.charAt(0) + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) + 1));
+            }
+        } else {
+            this.enpassantable = "";
+        }
+
     }
     
 }

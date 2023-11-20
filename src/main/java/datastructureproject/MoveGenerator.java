@@ -74,7 +74,7 @@ public class MoveGenerator {
             int kingCol = kingCoords.get(0)[1];
             long kingMoves = this.getKingMovesBitBoard(kingRow, kingCol);
             ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
-            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(kingRow, kingCol, kingMovesCoords);
+            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(kingRow, kingCol, kingMovesCoords, false);
             legalMoves.addAll(kingMovesUCI);
         } else {
             //loop through the board and find all legal moves for each piece and add them to the legalMoves list
@@ -83,34 +83,40 @@ public class MoveGenerator {
                     if (this.board[row][col] != null && this.board[row][col].getSide() == this.sideToMove) {
                         boolean pinned = this.isPinned(row, col);
                         if (this.board[row][col].getType() == PieceType.PAWN) {
+                            boolean promote = false;
+                            if (row == 6 && this.sideToMove == Side.WHITE) {
+                                promote = true;
+                            } else if (row == 1 && this.sideToMove == Side.BLACK) {
+                                promote = true;
+                            }
                             long pawnMoves = this.getPawnMovesBitBoard(row, col, inCheck, pinned);
                             ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
-                            ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(row, col, pawnMovesCoords);
+                            ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(row, col, pawnMovesCoords, promote);
                             legalMoves.addAll(pawnMovesUCI);
                         } else if (this.board[row][col].getType() == PieceType.KNIGHT) {
                             long knightMoves = this.getKnightMovesBitBoard(row, col, inCheck, pinned);
                             ArrayList<int[]> knightMovesCoords = getCoordinatesFromBitboard(knightMoves);
-                            ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(row, col, knightMovesCoords);
+                            ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(row, col, knightMovesCoords, false);
                             legalMoves.addAll(knightMovesUCI);
                         } else if (this.board[row][col].getType() == PieceType.BISHOP) {
                             long bishopMoves = this.getBishopMovesBitBoard(row, col, inCheck, pinned);
                             ArrayList<int[]> bishopMovesCoords = getCoordinatesFromBitboard(bishopMoves);
-                            ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(row, col, bishopMovesCoords);
+                            ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(row, col, bishopMovesCoords, false);
                             legalMoves.addAll(bishopMovesUCI);
                         } else if (this.board[row][col].getType() == PieceType.ROOK) {
                             long rookMoves = this.getRookMovesBitBoard(row, col, inCheck, pinned);
                             ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
-                            ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(row, col, rookMovesCoords);
+                            ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(row, col, rookMovesCoords, false);
                             legalMoves.addAll(rookMovesUCI);
                         } else if (this.board[row][col].getType() == PieceType.QUEEN) {
                             long queenMoves = this.getQueenMovesBitBoard(row, col, inCheck, pinned);
                             ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
-                            ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(row, col, queenMovesCoords);
+                            ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(row, col, queenMovesCoords, false);
                             legalMoves.addAll(queenMovesUCI);
                         } else if (this.board[row][col].getType() == PieceType.KING) {
                             long kingMoves = this.getKingMovesBitBoard(row, col);
                             ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
-                            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(row, col, kingMovesCoords);
+                            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(row, col, kingMovesCoords, false);
                             legalMoves.addAll(kingMovesUCI);
                         }
                     }
@@ -721,7 +727,28 @@ public class MoveGenerator {
         if (!inCheck) {
             return pawnMoves;
         } else {
+            // special check for if an enpassant capture gets rid of check
+            long enpassantGetRidOfCheck = 0L;
+
+            ArrayList<int[]> attackerCoords = getCoordinatesFromBitboard(this.attackers);
+            int attackerRow = attackerCoords.get(0)[0];
+            int attackerCol = attackerCoords.get(0)[1];
+
+            if (this.board[attackerRow][attackerCol].getType() == PieceType.PAWN) {
+                if (MoveParser.getFromRow(this.enpassantable) == attackerRow && MoveParser.getFromCol(this.enpassantable) == attackerCol) {
+                    if (this.sideToMove == Side.WHITE) {
+                        if (((pawnMoves >> ((attackerRow + 1) * 8 + attackerCol)) & 1L) > 0) {
+                            enpassantGetRidOfCheck = 1L << ((attackerRow + 1) * 8 + attackerCol);
+                        }
+                    } else {
+                        if (((pawnMoves >> ((attackerRow - 1) * 8 + attackerCol)) & 1L) > 0) {
+                            enpassantGetRidOfCheck = 1L << ((attackerRow - 1) * 8 + attackerCol);
+                        }
+                    }
+                }
+            }
             pawnMoves &= this.inCheckLegalMoves;
+            pawnMoves |= enpassantGetRidOfCheck;
             return pawnMoves;
         }
         

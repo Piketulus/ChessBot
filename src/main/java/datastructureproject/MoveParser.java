@@ -104,10 +104,19 @@ public class MoveParser {
      * @param destinations list of destination coordinates
      * @return list of move strings
      */
-    public static ArrayList<String> coordsToMoves(int fromRow, int fromCol, ArrayList<int[]> destinations) {
+    public static ArrayList<String> coordsToMoves(int fromRow, int fromCol, ArrayList<int[]> destinations, boolean isPromotion) {
         ArrayList<String> moves = new ArrayList<>();
-        for (int[] destination : destinations) {
-            moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1));
+        if (!isPromotion) {
+            for (int[] destination : destinations) {
+                moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1));
+            }
+        } else {
+            for (int[] destination : destinations) {
+                moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1) + "q");
+                moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1) + "r");
+                moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1) + "b");
+                moves.add(numberToLetter(fromCol) + (fromRow + 1) + numberToLetter(destination[1]) + (destination[0] + 1) + "n");
+            }
         }
         return moves;
     }

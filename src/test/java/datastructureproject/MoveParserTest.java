@@ -52,7 +52,7 @@ public class MoveParserTest {
         ArrayList<int[]> toCoords = new ArrayList<>();
         toCoords.add(new int[]{1, 0});
         String move = "a1a2";
-        assertEquals(move, MoveParser.coordsToMoves(fromRow, fromCol, toCoords).get(0));
+        assertEquals(move, MoveParser.coordsToMoves(fromRow, fromCol, toCoords, false).get(0));
     }
 
 }
