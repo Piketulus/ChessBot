@@ -729,24 +729,27 @@ public class MoveGenerator {
         } else {
             // special check for if an enpassant capture gets rid of check
             long enpassantGetRidOfCheck = 0L;
+            
+            if (!this.enpassantable.equals("")) {
+                ArrayList<int[]> attackerCoords = getCoordinatesFromBitboard(this.attackers);
+                int attackerRow = attackerCoords.get(0)[0];
+                int attackerCol = attackerCoords.get(0)[1];
 
-            ArrayList<int[]> attackerCoords = getCoordinatesFromBitboard(this.attackers);
-            int attackerRow = attackerCoords.get(0)[0];
-            int attackerCol = attackerCoords.get(0)[1];
-
-            if (this.board[attackerRow][attackerCol].getType() == PieceType.PAWN) {
-                if (MoveParser.getFromRow(this.enpassantable) == attackerRow && MoveParser.getFromCol(this.enpassantable) == attackerCol) {
-                    if (this.sideToMove == Side.WHITE) {
-                        if (((pawnMoves >> ((attackerRow + 1) * 8 + attackerCol)) & 1L) > 0) {
-                            enpassantGetRidOfCheck = 1L << ((attackerRow + 1) * 8 + attackerCol);
-                        }
-                    } else {
-                        if (((pawnMoves >> ((attackerRow - 1) * 8 + attackerCol)) & 1L) > 0) {
-                            enpassantGetRidOfCheck = 1L << ((attackerRow - 1) * 8 + attackerCol);
+                if (this.board[attackerRow][attackerCol].getType() == PieceType.PAWN) {
+                    if (MoveParser.getFromRow(this.enpassantable) == attackerRow && MoveParser.getFromCol(this.enpassantable) == attackerCol) {
+                        if (this.sideToMove == Side.WHITE) {
+                            if (((pawnMoves >> ((attackerRow + 1) * 8 + attackerCol)) & 1L) > 0) {
+                                enpassantGetRidOfCheck = 1L << ((attackerRow + 1) * 8 + attackerCol);
+                            }
+                        } else {
+                            if (((pawnMoves >> ((attackerRow - 1) * 8 + attackerCol)) & 1L) > 0) {
+                                enpassantGetRidOfCheck = 1L << ((attackerRow - 1) * 8 + attackerCol);
+                            }
                         }
                     }
                 }
             }
+            
             pawnMoves &= this.inCheckLegalMoves;
             pawnMoves |= enpassantGetRidOfCheck;
             return pawnMoves;

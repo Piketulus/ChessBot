@@ -22,8 +22,13 @@ public class ChessBoard {
 
     public ChessBoard(ChessBoard other) {
         this.board = new Piece[8][8];
+        Piece[][] otherBoard = other.getBoard();
         for (int i = 0; i < 8; i++) {
-            System.arraycopy(other.getBoard()[i], 0, this.board[i], 0, 8);
+            for (int j = 0; j < 8 ; j++) {
+                if (otherBoard[i][j] != null) {
+                    this.board[i][j] = new Piece(otherBoard[i][j]);
+                }
+            }
         }
         this.enpassantable = other.getEnpassantable();
     }
