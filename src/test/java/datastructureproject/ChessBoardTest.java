@@ -133,4 +133,14 @@ public class ChessBoardTest {
 
     }
 
+    @Test
+    public void testUndoMove() {
+        String[] moves = {"g1f3"};
+        board.makeMoves(moves);
+        board.undoMove();
+        assertEquals(PieceType.KNIGHT, board.getPiece(0, 6).getType());
+        assertEquals(null, board.getPiece(2, 5));
+        
+    }
+
 }

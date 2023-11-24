@@ -1,5 +1,7 @@
 package datastructureproject;
 
+import java.util.LinkedList;
+
 import chess.model.Side;
 
 
@@ -11,11 +13,18 @@ public class ChessBoard {
 
     private Piece[][] board;
     private String enpassantable;
+    private String castlingRights;
+
+    private LinkedList<String> previousMoves = new LinkedList<String>();
+    private LinkedList<String> previousEnps = new LinkedList<String>();
+    private LinkedList<Piece> previousCaptures = new LinkedList<Piece>();
+    private LinkedList<String> previousCastlingRights = new LinkedList<String>();
 
 
     public ChessBoard() {
         this.board = new Piece[8][8];
         this.enpassantable = "";
+        this.castlingRights = "KQkq";
         this.addWhitePieces();
         this.addBlackPieces();
     }
@@ -31,14 +40,11 @@ public class ChessBoard {
             }
         }
         this.enpassantable = other.getEnpassantable();
+        this.castlingRights = other.getCastlingRights();
     }
 
     public Piece[][] getBoard() {
         return this.board;
-    }
-
-    public void setBoard(Piece[][] board) {
-        this.board = board;
     }
 
     public String getEnpassantable() {
@@ -47,6 +53,14 @@ public class ChessBoard {
 
     public void setEnpassantable(String enpassantable) {
         this.enpassantable = enpassantable;
+    }
+
+    public String getCastlingRights() {
+        return this.castlingRights;
+    }
+
+    public void setCastlingRights(String castlingRights) {
+        this.castlingRights = castlingRights;
     }
 
     public Piece getPiece(int row, int col) {
@@ -65,17 +79,36 @@ public class ChessBoard {
     /**
      * Given a UCI move, this method makes the move on the board.
      * Expects given move to be valid (does not check for validity)
-     * @param move a Move object containing the move in UCI format
+     * @param move a string of a move in UCI format
      */
     public void makeMove(String move) {
 
+        int fromRow = MoveParser.getFromRow(move);
+        int fromCol = MoveParser.getFromCol(move);
+        int toRow = MoveParser.getToRow(move);
+        int toCol = MoveParser.getToCol(move);
+
+        /*
+        //add move to previous moves list
+        this.previousMoves.addLast(move);
+        this.previousEnps.addLast(this.enpassantable);
+        this.previousCastlingRights.addLast(this.castlingRights);
+
+        //add captured piece to previous captures list
+        Piece captured = this.getPiece(toRow, toCol);
+        if (captured != null) {
+            this.previousCaptures.addLast(captured);
+        } else {
+            this.previousCaptures.addLast(null);
+        }
+         */
         //special case for promotion:
 
         if (MoveParser.isPromotion(move)) { 
             Piece piece = new Piece(MoveParser.getPromotionPiece(move), 
-                                    this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getSide());
-            this.setPiece(MoveParser.getToRow(move), MoveParser.getToCol(move), piece);
-            this.removePiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
+                                    this.getPiece(fromRow, fromCol).getSide());
+            this.setPiece(toRow, toCol, piece);
+            this.removePiece(fromRow, fromCol);
             piece.setHasMoved();
             return;
         } 
@@ -105,26 +138,36 @@ public class ChessBoard {
             Piece piece = this.getPiece(7, 7);
             this.setPiece(7, 5, piece);
             this.removePiece(7, 7);
-            piece.setHasMoved();                
+            piece.setHasMoved();
         }
         
         //special case for en passant:
 
         if (!this.enpassantable.equals("")) {
             if (move.charAt(0) != move.charAt(2) 
-                && move.charAt(1) == enpassantable.charAt(1) 
-                && move.charAt(2) == enpassantable.charAt(0) 
-                && this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() 
+                && move.charAt(1) == this.enpassantable.charAt(1) 
+                && move.charAt(2) == this.enpassantable.charAt(0) 
+                && this.getPiece(fromRow, fromCol).getType() 
                 == PieceType.PAWN) {
+                
+                //this.previousCaptures.removeLast();
+                //this.previousCaptures.addLast(new Piece(this.getPiece(fromRow, toCol)));
 
-                this.removePiece(MoveParser.getFromRow(move), MoveParser.getToCol(move));
+                this.removePiece(fromRow, toCol);
             }
         }
 
         //set enpassantable piece:
-
-        if (this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move)).getType() == PieceType.PAWN 
-            && Math.abs(MoveParser.getFromRow(move) - MoveParser.getToRow(move)) == 2) {
+        /*
+        if (this.getPiece(fromRow, fromCol) == null) {
+            this.printBoardNicely();
+            System.out.println(this.previousMoves);
+            throw new IllegalArgumentException("No piece at " + move);
+            
+        }
+         */
+        if (this.getPiece(fromRow, fromCol).getType() == PieceType.PAWN 
+            && Math.abs(fromRow - toRow) == 2) {
 
             this.enpassantable = move.substring(2);
 
@@ -133,18 +176,196 @@ public class ChessBoard {
             this.enpassantable = "";
         }
 
-        Piece piece = this.getPiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
-        this.setPiece(MoveParser.getToRow(move), MoveParser.getToCol(move), piece);
-        this.removePiece(MoveParser.getFromRow(move), MoveParser.getFromCol(move));
+        Piece piece = this.getPiece(fromRow, fromCol);
         if (!piece.getHasMoved()) {
             piece.setHasMoved();
+            // if the piece is a rook, remove castling rights for that side, if piece is king, remove all castling rights
+            /*
+            if (piece.getType() == PieceType.ROOK) {
+                if (piece.getSide() == Side.WHITE) {
+                    if (fromRow == 0 && fromCol == 0) {
+                        this.castlingRights = this.castlingRights.replace("Q", "");
+                    } else if (fromRow == 0 && fromCol == 7) {
+                        this.castlingRights = this.castlingRights.replace("K", "");
+                    }
+                } else {
+                    if (fromRow == 7 && fromCol == 0) {
+                        this.castlingRights = this.castlingRights.replace("q", "");
+                    } else if (fromRow == 7 && fromCol == 7) {
+                        this.castlingRights = this.castlingRights.replace("k", "");
+                    }
+                }
+            } else if (piece.getType() == PieceType.KING) {
+                if (piece.getSide() == Side.WHITE) {
+                    this.castlingRights = this.castlingRights.replace("Q", "");
+                    this.castlingRights = this.castlingRights.replace("K", "");
+                } else {
+                    this.castlingRights = this.castlingRights.replace("q", "");
+                    this.castlingRights = this.castlingRights.replace("k", "");
+                }
+            }
+             */
         }
+        this.setPiece(toRow, toCol, piece);
+        this.removePiece(fromRow, fromCol);
+        
     }
 
     public void makeMoves(String[] moves) {
         for (String move : moves) {
             this.makeMove(move);
         }
+    }
+
+
+    /**
+     * Undoes the last move made on the board.
+     * Expects that there is a move to undo.
+     */
+    public void undoMove() {
+
+        String move = this.previousMoves.removeLast();
+        String prevEnpassant = this.previousEnps.removeLast();
+        Piece captured = this.previousCaptures.removeLast();
+        String castlingRights = this.previousCastlingRights.removeLast();
+
+        int fromRow = MoveParser.getFromRow(move);
+        int fromCol = MoveParser.getFromCol(move);
+        int toRow = MoveParser.getToRow(move);
+        int toCol = MoveParser.getToCol(move);
+
+        //special case for promotion:
+
+        if (MoveParser.isPromotion(move)) { 
+            Piece piece = new Piece(PieceType.PAWN, this.getPiece(toRow, toCol).getSide());
+            this.setPiece(fromRow, fromCol, piece);
+            this.setPiece(toRow, toCol, captured);
+            this.setEnpassantable(prevEnpassant);
+            this.setCastlingRights(castlingRights);
+            return;
+        } 
+
+        //special cases for castling moves:
+
+        if (move.equals("e1c1") && this.getPiece(0, 2).getType() == PieceType.KING) {
+            //move the rook from d1 to a1
+            Piece piece = this.getPiece(0, 3);
+            piece.setHasNotMoved();
+            this.setPiece(0, 0, piece);
+            this.removePiece(0, 3);
+            //move king
+            Piece piece2 = this.getPiece(toRow, toCol);
+            piece2.setHasNotMoved();
+            this.setPiece(fromRow, fromCol, piece2);
+            this.removePiece(toRow, toCol);
+            this.setEnpassantable(prevEnpassant);
+            this.setCastlingRights(castlingRights);
+            return;
+        } else if (move.equals("e1g1") && this.getPiece(0, 6).getType() == PieceType.KING) {
+            //move the rook from f1 to h1
+            Piece piece = this.getPiece(0, 5);
+            piece.setHasNotMoved();
+            this.setPiece(0, 7, piece);
+            this.removePiece(0, 5);
+            //move king
+            Piece piece2 = this.getPiece(toRow, toCol);
+            piece2.setHasNotMoved();
+            this.setPiece(fromRow, fromCol, piece2);
+            this.removePiece(toRow, toCol);
+            this.setEnpassantable(prevEnpassant);
+            this.setCastlingRights(castlingRights);
+            return;
+        } else if (move.equals("e8c8") && this.getPiece(7, 2).getType() == PieceType.KING) {
+            //move the rook from d8 to a8
+            Piece piece = this.getPiece(7, 3);
+            piece.setHasNotMoved();
+            this.setPiece(7, 0, piece);
+            this.removePiece(7, 3);
+            //move king
+            Piece piece2 = this.getPiece(toRow, toCol);
+            piece2.setHasNotMoved();
+            this.setPiece(fromRow, fromCol, piece2);
+            this.removePiece(toRow, toCol);
+            this.setEnpassantable(prevEnpassant);
+            this.setCastlingRights(castlingRights);
+            return;
+        } else if (move.equals("e8g8") && this.getPiece(7, 6).getType() == PieceType.KING) {
+            //move the rook from f8 to h8
+            Piece piece = this.getPiece(7, 5);
+            piece.setHasNotMoved();
+            this.setPiece(7, 7, piece);
+            this.removePiece(7, 5);
+            //move king
+            Piece piece2 = this.getPiece(toRow, toCol);
+            piece2.setHasNotMoved();
+            this.setPiece(fromRow, fromCol, piece2);
+            this.removePiece(toRow, toCol);
+            this.setEnpassantable(prevEnpassant);
+            this.setCastlingRights(castlingRights);
+            return;
+        }
+
+        //special case for en passant:
+        
+        if (!prevEnpassant.equals("") && captured != null) {
+            if (move.charAt(0) != move.charAt(2) 
+                && move.charAt(1) == prevEnpassant.charAt(1) 
+                && move.charAt(2) == prevEnpassant.charAt(0) 
+                && this.getPiece(toRow, toCol).getType() == PieceType.PAWN
+                && captured.getType() == PieceType.PAWN) {
+                
+                this.setPiece(fromRow, toCol, captured);
+                this.setPiece(fromRow, fromCol, this.getPiece(toRow, toCol));
+                this.setPiece(toRow, toCol, null);
+                this.setEnpassantable(prevEnpassant);
+                this.setCastlingRights(castlingRights);
+                return;
+            }
+        }
+
+        //otherwise:
+
+        Piece piece = this.getPiece(toRow, toCol);
+
+        // check previous castling rights and set hasMoved accordingly
+        if (piece.getType() == PieceType.KING) {
+            if (piece.getSide() == Side.WHITE) {
+                if (castlingRights.contains("K") || castlingRights.contains("Q")) {
+                    piece.setHasNotMoved();
+                }
+            } else {
+                if (castlingRights.contains("k") || castlingRights.contains("q")) {
+                    piece.setHasNotMoved();
+                }
+            }
+        } else if (piece.getType() == PieceType.ROOK) {
+            if (piece.getSide() == Side.WHITE) {
+                if (fromRow == 0 && fromCol == 0) {
+                    if (castlingRights.contains("Q")) {
+                        piece.setHasNotMoved();
+                    }
+                } else if (fromRow == 0 && fromCol == 7) {
+                    if (castlingRights.contains("K")) {
+                        piece.setHasNotMoved();
+                    }
+                }
+            } else {
+                if (fromRow == 7 && fromCol == 0) {
+                    if (castlingRights.contains("q")) {
+                        piece.setHasNotMoved();
+                    }
+                } else if (fromRow == 7 && fromCol == 7) {
+                    if (castlingRights.contains("k")) {
+                        piece.setHasNotMoved();
+                    }
+                }
+            }
+        }
+
+        this.setPiece(fromRow, fromCol, piece);
+        this.setPiece(toRow, toCol, captured);
+        this.setEnpassantable(prevEnpassant);
+        this.setCastlingRights(castlingRights);
     }
 
 
@@ -181,6 +402,66 @@ public class ChessBoard {
     }
 
 
+    public void printBoardNicely() {
+        //prints the board in a nice format
+        System.out.println("  a b c d e f g h");
+        for (int i = 7; i >= 0; i--) {
+            System.out.print((i + 1) + " ");
+            for (int j = 0; j < 8; j++) {
+                if (this.board[i][j] == null) {
+                    System.out.print("- ");
+                } else {
+                    if (this.board[i][j].getSide() == Side.WHITE) {
+                        switch (this.board[i][j].getType()) {
+                            case PAWN:
+                                System.out.print("P ");
+                                break;
+                            case ROOK:
+                                System.out.print("R ");
+                                break;
+                            case KNIGHT:
+                                System.out.print("N ");
+                                break;
+                            case BISHOP:
+                                System.out.print("B ");
+                                break;
+                            case QUEEN:
+                                System.out.print("Q ");
+                                break;
+                            case KING:
+                                System.out.print("K ");
+                                break;
+                        }
+                    } else {
+                        switch (this.board[i][j].getType()) {
+                            case PAWN:
+                                System.out.print("p ");
+                                break;
+                            case ROOK:
+                                System.out.print("r ");
+                                break;
+                            case KNIGHT:
+                                System.out.print("n ");
+                                break;
+                            case BISHOP:
+                                System.out.print("b ");
+                                break;
+                            case QUEEN:
+                                System.out.print("q ");
+                                break;
+                            case KING:
+                                System.out.print("k ");
+                                break;
+                        }
+                    }
+                }
+            }
+            System.out.println(i + 1);
+        }
+        System.out.println("  a b c d e f g h");
+    }
+
+
     public void fenToBoard(String fen) {
         //converts a FEN string to a board
         this.board = new Piece[8][8];
@@ -193,6 +474,8 @@ public class ChessBoard {
         boolean whiteQueenSide = castlingRights.contains("Q");
         boolean blackKingSide = castlingRights.contains("k");
         boolean blackQueenSide = castlingRights.contains("q");
+
+        this.setCastlingRights(castlingRights);
 
         String[] rows = fenParts[0].split("/");
         for (int i = 0; i < 8; i++) {

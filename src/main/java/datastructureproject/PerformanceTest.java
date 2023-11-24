@@ -27,9 +27,16 @@ public class PerformanceTest {
 
         //https://www.chessprogramming.org/Perft_Results for perft test positions and results
 
-        pt.perft("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", 2, false);
+        //pt.perft("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 5, false);
 
-        pt.getEvaluation("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P2N/P1NP4/1PP1bPPP/R4RK1 w - - 0 11");
+        //pt.getEvaluation("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P2N/P1NP4/1PP1bPPP/R4RK1 w - - 0 11");
+
+        long startTime = System.nanoTime();
+        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 5);
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime) / 1000000;
+        System.out.println("Time taken: " + duration + "ms");
+        System.out.println("Move: " + move);
         
     }
 
@@ -68,6 +75,7 @@ public class PerformanceTest {
                 ChessBoard newBoard = new ChessBoard(board);
                 newBoard.makeMove(move);
                 long nodes = pt.getNodesGenerated(depth - 1, newBoard, opSide);
+                //board.undoMove();
                 System.out.println(move + ": " + nodes);
             }
             System.out.println("Total: " + moves.size());
@@ -90,6 +98,7 @@ public class PerformanceTest {
             ChessBoard newBoard = new ChessBoard(board);
             newBoard.makeMove(move);
             nodes += getNodesGenerated(depth - 1, newBoard, opposite);
+            //board.undoMove();
         }
 
         return nodes;
@@ -104,6 +113,89 @@ public class PerformanceTest {
         Side side = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
         int score = PositionEvaluator.evaluatePosition(board.getBoard(), side);
         System.out.println("Evaluation: " + score);
+    }
+
+
+    /**
+     * Methods copied (only slightly modified) from PiketulusBot.java for testing purposes
+     */
+    public String nextMove(String fen, int depth) {
+
+        ChessBoard board = new ChessBoard();
+        board.fenToBoard(fen);
+        Side playing = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
+        
+        Side opSide = playing == Side.WHITE ? Side.BLACK : Side.WHITE;
+
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), playing);
+        ArrayList<String> moves = mg.getMoves();
+
+        if (moves.size() != 0) {
+            String bestMove = moves.get(0);
+            int bestScore = Integer.MIN_VALUE;
+            for (String move : moves) {
+                ChessBoard newBoard = new ChessBoard(board);
+                newBoard.makeMove(move);
+                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, Integer.MAX_VALUE, opSide, playing);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            board.makeMove(bestMove);
+            return bestMove;
+        }
+        
+        return null;
+    }
+
+
+    private int alphaBetaMinimax(int d, ChessBoard board, int alpha, int beta, Side turn, Side playing) {
+        if (d == 0) {
+            return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
+        }
+
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), turn);
+        Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
+        ArrayList<String> moves = mg.getMoves();
+
+        if (moves.size() == 0) {
+            if (mg.kingInCheck > 0 && turn == playing) {
+                return Integer.MIN_VALUE + 1;
+            } else if (mg.kingInCheck > 0 && turn != playing) {
+                return Integer.MAX_VALUE - 1;
+            } else {
+                return 0;
+            }
+        }
+
+        if (turn == playing) {
+            int bestScore = Integer.MIN_VALUE;
+            for (String move : moves) {
+                ChessBoard newBoard = new ChessBoard(board);
+                newBoard.makeMove(move);
+                int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
+                bestScore = Math.max(bestScore, score);
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return bestScore;
+        } else {
+            int bestScore = Integer.MAX_VALUE;
+            for (String move : moves) {
+                ChessBoard newBoard = new ChessBoard(board);
+                newBoard.makeMove(move);
+                int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
+                bestScore = Math.min(bestScore, score);
+                beta = Math.min(beta, score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return bestScore;
+        }
     }
 
 }

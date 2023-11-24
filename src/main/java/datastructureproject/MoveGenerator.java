@@ -18,7 +18,7 @@ public class MoveGenerator {
 
     private ArrayList<long[]> pinnedPieces; // [0] = rowPinned, [1] = colPinned, [2] = legal move 'ray'
 
-    private int kingInCheck; // 0 = not in check, 1 = in check, 2 = double check
+    public int kingInCheck; // 0 = not in check, 1 = in check, 2 = double check
     private long attackers; // bitboard of checking pieces
     private long inCheckLegalMoves; // bitboard of legal moves when in check
 
