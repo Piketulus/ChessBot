@@ -26,16 +26,17 @@ public class MoveGenerator {
     public long blackPieces = 0L;
 
     public long whitePawns = 0L;
-    public long blackPawns = 0L;
     public long whiteKnights = 0L;
-    public long blackKnights = 0L;
     public long whiteBishops = 0L;
-    public long blackBishops = 0L;
     public long whiteRooks = 0L;
-    public long blackRooks = 0L;
     public long whiteQueens = 0L;
-    public long blackQueens = 0L;
     public long whiteKing = 0L;
+
+    public long blackPawns = 0L;
+    public long blackKnights = 0L;
+    public long blackBishops = 0L;
+    public long blackRooks = 0L;
+    public long blackQueens = 0L;
     public long blackKing = 0L;
 
 
@@ -1154,71 +1155,74 @@ public class MoveGenerator {
 
 
     // Function to get the coordinates of the bits on a bitboard
-    private static ArrayList<int[]> getCoordinatesFromBitboard(long bitboard) {
+    public static ArrayList<int[]> getCoordinatesFromBitboard(long bitboard) {
         ArrayList<int[]> bitboardCoordinates = new ArrayList<>();
 
-        for (int i = 0; i < 64; i++) {
-            if (((bitboard >> i) & 1L) > 0) {
-                bitboardCoordinates.add(new int[]{i / 8, i % 8});
-            }
+        while (bitboard != 0L) {
+            int index = Long.numberOfTrailingZeros(bitboard);
+            bitboardCoordinates.add(new int[]{index / 8, index % 8});
+            bitboard &= ~(1L << index);
         }
-
+        
         return bitboardCoordinates;
     }
 
 
     private void fillBitboards() {
-        //fill the bitboards by looping through the board
+        // Fill bitboards by looping through the board
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = this.board[row][col];
+                long bit = 1L << (row * 8 + col);
                 if (piece != null) {
                     if (piece.getSide() == Side.WHITE) {
-                        this.whitePieces |= 1L << (row * 8 + col);
+                        this.whitePieces |= bit;
+                        switch (piece.getType()) {
+                            case PAWN:
+                                this.whitePawns |= bit;
+                                break;
+                            case KNIGHT:
+                                this.whiteKnights |= bit;
+                                break;
+                            case BISHOP:
+                                this.whiteBishops |= bit;
+                                break;
+                            case ROOK:
+                                this.whiteRooks |= bit;
+                                break;
+                            case QUEEN:
+                                this.whiteQueens |= bit;
+                                break;
+                            case KING:
+                                this.whiteKing |= bit;
+                                break;
+                        }
                     } else {
-                        this.blackPieces |= 1L << (row * 8 + col);
-                    }
-                    if (piece.getType() == PieceType.PAWN) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whitePawns |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackPawns |= 1L << (row * 8 + col);
-                        }
-                    } else if (piece.getType() == PieceType.KNIGHT) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whiteKnights |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackKnights |= 1L << (row * 8 + col);
-                        }
-                    } else if (piece.getType() == PieceType.BISHOP) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whiteBishops |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackBishops |= 1L << (row * 8 + col);
-                        }
-                    } else if (piece.getType() == PieceType.ROOK) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whiteRooks |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackRooks |= 1L << (row * 8 + col);
-                        }
-                    } else if (piece.getType() == PieceType.QUEEN) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whiteQueens |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackQueens |= 1L << (row * 8 + col);
-                        }
-                    } else if (piece.getType() == PieceType.KING) {
-                        if (piece.getSide() == Side.WHITE) {
-                            this.whiteKing |= 1L << (row * 8 + col);
-                        } else {
-                            this.blackKing |= 1L << (row * 8 + col);
+                        this.blackPieces |= bit;
+                        switch (piece.getType()) {
+                            case PAWN:
+                                this.blackPawns |= bit;
+                                break;
+                            case KNIGHT:
+                                this.blackKnights |= bit;
+                                break;
+                            case BISHOP:
+                                this.blackBishops |= bit;
+                                break;
+                            case ROOK:
+                                this.blackRooks |= bit;
+                                break;
+                            case QUEEN:
+                                this.blackQueens |= bit;
+                                break;
+                            case KING:
+                                this.blackKing |= bit;
+                                break;
                         }
                     }
                 }
             }
         }
-
     }
 
 }

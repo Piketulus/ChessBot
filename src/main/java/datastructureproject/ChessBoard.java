@@ -24,7 +24,7 @@ public class ChessBoard {
         this.board = new Piece[8][8];
         Piece[][] otherBoard = other.getBoard();
         for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8 ; j++) {
+            for (int j = 0; j < 8; j++) {
                 if (otherBoard[i][j] != null) {
                     this.board[i][j] = new Piece(otherBoard[i][j]);
                 }
@@ -277,9 +277,11 @@ public class ChessBoard {
 
         if (!enpassantable.equals("-")) {
             if (toMove.equals("w")) {
-                this.enpassantable = enpassantable.charAt(0) + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) - 1));
+                this.enpassantable = enpassantable.charAt(0) 
+                    + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) - 1));
             } else {
-                this.enpassantable = enpassantable.charAt(0) + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) + 1));
+                this.enpassantable = enpassantable.charAt(0) 
+                    + Integer.toString((Character.getNumericValue(enpassantable.charAt(1)) + 1));
             }
         } else {
             this.enpassantable = "";

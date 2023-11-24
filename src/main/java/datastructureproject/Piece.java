@@ -12,33 +12,17 @@ public class Piece {
     private PieceType type;
     private Side side;
     private boolean hasMoved;
-    private int value;
 
     public Piece(PieceType type, Side side) {
         this.type = type;
         this.side = side;
         this.hasMoved = false;
-        
-        if (type == PieceType.PAWN) {
-            this.value = 1;
-        } else if (type == PieceType.ROOK) {
-            this.value = 5;
-        } else if (type == PieceType.KNIGHT) {
-            this.value = 3;
-        } else if (type == PieceType.BISHOP) {
-            this.value = 3;
-        } else if (type == PieceType.QUEEN) {
-            this.value = 9;
-        } else if (type == PieceType.KING) {
-            this.value = 1000;
-        }
     }
 
     public Piece(Piece other) {
         this.type = other.getType();
         this.side = other.getSide();
         this.hasMoved = other.getHasMoved();
-        this.value = other.getValue();
     }
 
     public PieceType getType() {
@@ -51,10 +35,6 @@ public class Piece {
 
     public boolean getHasMoved() {
         return this.hasMoved;
-    }
-
-    public int getValue() {
-        return this.value;
     }
 
     public void setHasMoved() {

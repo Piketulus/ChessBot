@@ -36,11 +36,6 @@ public class PieceTest {
     }
 
     @Test
-    public void testGetValue() {
-        assertEquals(1, piece.getValue());
-    }
-
-    @Test
     public void testSetHasMoved() {
         piece.setHasMoved();
         assertTrue(piece.getHasMoved());
