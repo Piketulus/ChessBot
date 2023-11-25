@@ -1,6 +1,6 @@
 ## User Manual
 
-The project is made to work with the lichess.org chess interface. To play the bot against the lichess computer you will need a lichess bot account and lichess API-token at minimum. You can also play against the bot yourself on lichess, although this requires another, regular lichess account that is logged in on another device.
+The project is made to work with the lichess.org chess interface. To play the bot against the lichess computer you will need a lichess bot account and lichess API-token at minimum. You can also play against the bot yourself on lichess, this can be done on an incognito browser window for example, or another lichess account.
 
 The bot can play as both white and black, and currently the search depth is fixed at a value that allows the bot to play at a fast speed so there is no need to wait forever for the bot to make a move.
 
@@ -22,15 +22,13 @@ The bot can play as both white and black, and currently the search depth is fixe
 
     $ curl -d '' https<span></span>://lichess.org/api/bot/account/upgrade -H "Authorization: Bearer INSERT YOUR TOKEN HERE"
 
-4. To play against the bot yourself, you will also need to register a regular lichess account.
-
 ### Starting up the bot
 
 1. Clone the project and run in the root directory: `./gradlew build`
 
 2. 1. To play bot against bot: Go on lichess with the bot account and select *Play with the computer*, choose the computer level (the bot will probably have a hard time beating anything 4 or above), choose side and start the game.
 
-   2. To play against the bot yourself: Go on lichess with your bot account and select *Play with a friend*, log in with your regular lichess account on another device and copy the shown link to your browser and start the game.
+   2. To play against the bot yourself: Go on lichess with your bot account and select *Play with a friend*, choose side and start game. A link will be generated, copy the link and open it in an incognito browser window (so not signed in to lichess) or another device on another lichess account. You can now play against the bot.
 
 **Note:** if you play against the bot yourself and start as white, you will need to make your first move before starting up the bot in the next step.
 
