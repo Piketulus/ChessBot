@@ -179,7 +179,8 @@ public class ChessBoard {
         Piece piece = this.getPiece(fromRow, fromCol);
         if (!piece.getHasMoved()) {
             piece.setHasMoved();
-            // if the piece is a rook, remove castling rights for that side, if piece is king, remove all castling rights
+            // if the piece is a rook, remove castling rights for that side, 
+            // if piece is king, remove all castling rights
             /*
             if (piece.getType() == PieceType.ROOK) {
                 if (piece.getSide() == Side.WHITE) {

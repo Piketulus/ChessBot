@@ -136,7 +136,8 @@ public class PerformanceTest {
             for (String move : moves) {
                 ChessBoard newBoard = new ChessBoard(board);
                 newBoard.makeMove(move);
-                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, Integer.MAX_VALUE, opSide, playing);
+                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
+                                             Integer.MAX_VALUE, opSide, playing);
                 if (score > bestScore) {
                     bestScore = score;
                     bestMove = move;

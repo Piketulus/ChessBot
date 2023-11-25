@@ -9,7 +9,7 @@ import chess.model.Side;
 public class PiketulusBot implements ChessBot {
 
     private ChessBoard board;
-    private int depth = 4;
+    private int depth = 5;
 
 
     public PiketulusBot() {
@@ -35,7 +35,8 @@ public class PiketulusBot implements ChessBot {
             for (String move : moves) {
                 ChessBoard newBoard = new ChessBoard(board);
                 newBoard.makeMove(move);
-                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, Integer.MAX_VALUE, opSide, gs.playing);
+                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
+                                             Integer.MAX_VALUE, opSide, gs.playing);
                 if (score > bestScore) {
                     bestScore = score;
                     bestMove = move;
@@ -50,6 +51,7 @@ public class PiketulusBot implements ChessBot {
 
 
     private int alphaBetaMinimax(int d, ChessBoard board, int alpha, int beta, Side turn, Side playing) {
+
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
         }
