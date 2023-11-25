@@ -1,10 +1,10 @@
-package chess.bot;
+package datastructureproject;
 
 import java.util.ArrayList;
 
+import chess.bot.ChessBot;
 import chess.engine.GameState;
 import chess.model.Side;
-import datastructureproject.*;
 
 public class PiketulusBot implements ChessBot {
 
