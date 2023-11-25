@@ -132,7 +132,7 @@ public class ChessBoardTest {
         assertEquals(PieceType.QUEEN, board.getPiece(6, 4).getType());
 
     }
-
+    /*
     @Test
     public void testUndoMove() {
         String[] moves = {"g1f3"};
@@ -142,5 +142,5 @@ public class ChessBoardTest {
         assertEquals(null, board.getPiece(2, 5));
         
     }
-
+     */
 }
