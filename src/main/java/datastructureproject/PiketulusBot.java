@@ -10,6 +10,7 @@ public class PiketulusBot implements ChessBot {
 
     private ChessBoard board;
     private int depth = 5;
+    private boolean start = true;
 
 
     public PiketulusBot() {
@@ -21,7 +22,12 @@ public class PiketulusBot implements ChessBot {
         
         Side opSide = gs.playing == Side.WHITE ? Side.BLACK : Side.WHITE;
 
-        if (gs.getMoveCount() > 0) {
+        if (start) {
+            for (String move : gs.moves) {
+                board.makeMove(move);
+            }
+            this.start = false;
+        } else if (gs.getMoveCount() > 0) {
             String lastMove = gs.getLatestMove();
             board.makeMove(lastMove);
         }
