@@ -151,6 +151,31 @@ public class PerformanceTest {
     }
 
 
+    private String iterDeepNextMove(int maxDepth, ChessBoard board, Side turn, Side playing) {
+        String bestMove = null;
+        int bestScore = Integer.MIN_VALUE;
+        for (int d = 1; d <= maxDepth; d++) {
+            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), turn);
+            Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
+            ArrayList<String> moves = mg.getMoves();
+            if (moves.size() == 0) {
+                break;
+            }
+            for (String move : moves) {
+                ChessBoard newBoard = new ChessBoard(board);
+                newBoard.makeMove(move);
+                int score = alphaBetaMinimax(d - 1, newBoard, Integer.MIN_VALUE, 
+                                             Integer.MAX_VALUE, opposite, playing);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+        }
+        return bestMove;
+    }
+
+
     private int alphaBetaMinimax(int d, ChessBoard board, int alpha, int beta, Side turn, Side playing) {
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
@@ -197,6 +222,31 @@ public class PerformanceTest {
             }
             return bestScore;
         }
+    }
+
+
+    private ArrayList<Integer> orderByHeuristic(ArrayList<String> moves, ChessBoard board, Side side) {
+        ArrayList<Integer> orderedIndices = new ArrayList();
+        ArrayList<Integer> scores = new ArrayList();
+        for (String move : moves) {
+            ChessBoard newBoard = new ChessBoard(board);
+            newBoard.makeMove(move);
+            int score = PositionEvaluator.evaluatePosition(newBoard.getBoard(), side);
+            scores.add(score);
+        }
+        while (scores.size() > 0) {
+            int maxScore = Integer.MIN_VALUE;
+            int maxIndex = 0;
+            for (int i = 0; i < scores.size(); i++) {
+                if (scores.get(i) > maxScore) {
+                    maxScore = scores.get(i);
+                    maxIndex = i;
+                }
+            }
+            orderedIndices.add(maxIndex);
+            scores.remove(maxIndex);
+        }
+        return orderedIndices;
     }
 
 }
