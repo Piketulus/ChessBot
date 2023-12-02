@@ -26,7 +26,7 @@ The bot can play as both white and black, and currently the max time per move is
 
 1. Clone the project and run in the root directory: `./gradlew build`
 
-2. 1. To play bot against bot: Go on lichess with the bot account and select *Play with the computer*, choose the computer level (the bot will probably have a hard time beating anything 4 or above), choose side and start the game.
+2. 1. To play bot against bot: Go on lichess with the bot account and select *Play with the computer*, choose the computer level (the bot will probably have a hard time beating anything 6 or above), choose side and start the game.
 
    2. To play against the bot yourself: Go on lichess with your bot account and select *Play with a friend*, choose side and start game. A link will be generated, copy the link and open it in an incognito browser window (so not signed in to lichess) or another device on another lichess account. You can now play against the bot.
 
