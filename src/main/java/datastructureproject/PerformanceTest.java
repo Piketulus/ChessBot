@@ -33,7 +33,7 @@ public class PerformanceTest {
 
         
         long startTime = System.nanoTime();
-        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 5);
+        String move = pt.nextMove("8/p7/8/8/1p6/nP1K1k2/P7/6q1 b - - 7 62", 8);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         System.out.println("Time taken: " + duration + "ms");
@@ -176,9 +176,9 @@ public class PerformanceTest {
 
         if (moves.size() == 0) {
             if (mg.kingInCheck > 0 && turn == playing) {
-                return Integer.MIN_VALUE + 1;
+                return Integer.MIN_VALUE + (8 - d);
             } else if (mg.kingInCheck > 0 && turn != playing) {
-                return Integer.MAX_VALUE - 1;
+                return Integer.MAX_VALUE - (8 - d);
             } else {
                 return 0;
             }
