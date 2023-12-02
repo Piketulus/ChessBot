@@ -41,7 +41,12 @@ public class PiketulusBot implements ChessBot {
 
         String bestMove = iterDeepNextMove(maxDepth, board, gs.playing, gs.playing);
 
-        return bestMove;
+        if (bestMove == null) {
+            return null;
+        } else {
+            board.makeMove(bestMove);
+            return bestMove;
+        }
     }
 
 
