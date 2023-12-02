@@ -21,3 +21,4 @@ Weekly reports:
 - [Week 2](documentation/week2report.md)
 - [Week 3](documentation/week3report.md)
 - [Week 4](documentation/week4report.md)
+- [Week 5](documentation/week5report.md)

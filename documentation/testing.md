@@ -14,4 +14,4 @@ This was implemented in the PerformanceTest class, which can be run with the com
 
 All the above functions take in FEN strings as parameters that describe the position to be tested. FEN strings of board positions for testing can be found online, or by going for example onto lichess' analysis board, making any sort of moves and copying the FEN string shown below.
 
-Currently with a search depth of 5, the bot can provide a "best move" in a few seconds at worst, depending on the exact position. This allows for a player to play a fast paced game against the bot, and is still reasonably good, as it is a challenge for me to beat it.
+Currently with a time limit of 5 seconds per move, the bot can reach depths between 5 and 10 when coming up with the best move depending on the complexity of the position. This time limit allows the player to play fast paced games against the bot, with the bot still being hard to beat.
