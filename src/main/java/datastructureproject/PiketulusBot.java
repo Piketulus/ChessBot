@@ -9,7 +9,8 @@ import chess.model.Side;
 public class PiketulusBot implements ChessBot {
 
     private BitChessBoard board;
-    private int depth = 5;
+    private int maxDepth = 8; // max depth for calculating a move
+    private int maxTime = 5000; // max time for calculating a move in milliseconds
     private boolean start = true;
 
 
@@ -20,8 +21,6 @@ public class PiketulusBot implements ChessBot {
 
     public String nextMove(GameState gs) {
         
-        Side opSide = gs.playing == Side.WHITE ? Side.BLACK : Side.WHITE;
-
         if (gs.moves.size() == 0 && gs.playing == Side.WHITE) {
             this.board = new BitChessBoard();
             this.start = true;
@@ -40,27 +39,40 @@ public class PiketulusBot implements ChessBot {
             board.makeMove(lastMove);
         }
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, gs.playing);
-        ArrayList<String> moves = mg.getMoves();
+        String bestMove = iterDeepNextMove(maxDepth, board, gs.playing, gs.playing);
 
-        if (moves.size() != 0) {
-            String bestMove = moves.get(0);
+        return bestMove;
+    }
+
+
+    private String iterDeepNextMove(int maxDepth, BitChessBoard board, Side turn, Side playing) {
+        String bestFoundMove = null;
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
+        Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
+        ArrayList<String> moves = mg.getMoves();
+        if (moves.size() == 0) {
+            return null;
+        }
+        long startTime = System.currentTimeMillis();
+        for (int d = 1; d <= maxDepth; d++) {
+            String bestMove = null;
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
+                if (System.currentTimeMillis() - startTime > maxTime) {
+                    return bestFoundMove;
+                }
                 BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
-                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
-                                             Integer.MAX_VALUE, opSide, gs.playing);
+                int score = alphaBetaMinimax(d - 1, newBoard, Integer.MIN_VALUE, 
+                                             Integer.MAX_VALUE, opposite, playing);
                 if (score > bestScore) {
                     bestScore = score;
                     bestMove = move;
                 }
             }
-            board.makeMove(bestMove);
-            return bestMove;
+            bestFoundMove = bestMove;
         }
-        
-        return null;
+        return bestFoundMove;
     }
 
 

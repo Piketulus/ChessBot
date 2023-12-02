@@ -27,13 +27,13 @@ public class PerformanceTest {
 
         //https://www.chessprogramming.org/Perft_Results for perft test positions and results
 
-        //pt.perft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", 5, false);
+        //pt.perft("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 5, false);
 
         //pt.getEvaluation("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P2N/P1NP4/1PP1bPPP/R4RK1 w - - 0 11");
 
         
         long startTime = System.nanoTime();
-        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 6);
+        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 5);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         System.out.println("Time taken: " + duration + "ms");
@@ -127,43 +127,29 @@ public class PerformanceTest {
         board.fenToBoard(fen);
         Side playing = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
         
-        Side opSide = playing == Side.WHITE ? Side.BLACK : Side.WHITE;
+        String bestMove = iterDeepNextMove(depth, board, playing, playing);
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, playing);
-        ArrayList<String> moves = mg.getMoves();
+        return bestMove;
 
-        if (moves.size() != 0) {
-            String bestMove = moves.get(0);
-            int bestScore = Integer.MIN_VALUE;
-            for (String move : moves) {
-                BitChessBoard newBoard = new BitChessBoard(board);
-                newBoard.makeMove(move);
-                int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
-                                             Integer.MAX_VALUE, opSide, playing);
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = move;
-                }
-            }
-            board.makeMove(bestMove);
-            return bestMove;
-        }
-        
-        return null;
     }
 
 
     private String iterDeepNextMove(int maxDepth, BitChessBoard board, Side turn, Side playing) {
-        String bestMove = null;
-        int bestScore = Integer.MIN_VALUE;
+        String bestFoundMove = null;
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
+        Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
+        ArrayList<String> moves = mg.getMoves();
+        if (moves.size() == 0) {
+            return null;
+        }
+        long startTime = System.currentTimeMillis();
         for (int d = 1; d <= maxDepth; d++) {
-            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
-            Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
-            ArrayList<String> moves = mg.getMoves();
-            if (moves.size() == 0) {
-                break;
-            }
+            String bestMove = null;
+            int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
+                if (System.currentTimeMillis() - startTime > 5000) {
+                    return bestFoundMove;
+                }
                 BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, Integer.MIN_VALUE, 
@@ -173,8 +159,9 @@ public class PerformanceTest {
                     bestMove = move;
                 }
             }
+            bestFoundMove = bestMove;
         }
-        return bestMove;
+        return bestFoundMove;
     }
 
 
@@ -224,31 +211,6 @@ public class PerformanceTest {
             }
             return bestScore;
         }
-    }
-
-
-    private ArrayList<Integer> orderByHeuristic(ArrayList<String> moves, BitChessBoard board, Side side) {
-        ArrayList<Integer> orderedIndices = new ArrayList();
-        ArrayList<Integer> scores = new ArrayList();
-        for (String move : moves) {
-            BitChessBoard newBoard = new BitChessBoard(board);
-            newBoard.makeMove(move);
-            int score = PositionEvaluator.evaluatePosition(newBoard.getBoard(), side);
-            scores.add(score);
-        }
-        while (scores.size() > 0) {
-            int maxScore = Integer.MIN_VALUE;
-            int maxIndex = 0;
-            for (int i = 0; i < scores.size(); i++) {
-                if (scores.get(i) > maxScore) {
-                    maxScore = scores.get(i);
-                    maxIndex = i;
-                }
-            }
-            orderedIndices.add(maxIndex);
-            scores.remove(maxIndex);
-        }
-        return orderedIndices;
-    }
+    }    
 
 }
