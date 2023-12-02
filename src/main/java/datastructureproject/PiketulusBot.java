@@ -93,9 +93,9 @@ public class PiketulusBot implements ChessBot {
 
         if (moves.size() == 0) {
             if (mg.kingInCheck > 0 && turn == playing) {
-                return Integer.MIN_VALUE + 1;
+                return Integer.MIN_VALUE + (this.maxDepth - d);
             } else if (mg.kingInCheck > 0 && turn != playing) {
-                return Integer.MAX_VALUE - 1;
+                return Integer.MAX_VALUE - (this.maxDepth - d);
             } else {
                 return 0;
             }
