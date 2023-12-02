@@ -10,12 +10,12 @@ import chess.model.Side;
 public class MoveGeneratorTest {
 
     MoveGenerator mg;
-    ChessBoard board;
+    BitChessBoard board;
 
     @Before
     public void setUp() {
-        board = new ChessBoard();
-        mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), Side.WHITE);
+        board = new BitChessBoard();
+        mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, Side.WHITE);
     }
 
     @After
@@ -34,7 +34,7 @@ public class MoveGeneratorTest {
     public void testGetMoves() {
         String[] moves = {"e2e4", "d7d5", "f1b5"};
         board.makeMoves(moves);
-        mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), Side.BLACK);
+        mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, Side.BLACK);
         ArrayList<String> responses = mg.getMoves();
         assertEquals(5, responses.size());
     }
@@ -43,7 +43,7 @@ public class MoveGeneratorTest {
     public void testCheckmate() {
         String[] moves = {"e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6", "h5f7"};
         board.makeMoves(moves);
-        mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), Side.BLACK);
+        mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, Side.BLACK);
         ArrayList<String> responses = mg.getMoves();
         assertEquals(0, responses.size());
     }

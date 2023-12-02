@@ -12,8 +12,8 @@ import chess.model.Side;
 public class MoveGenerator {
 
 
-    private Piece[][] board;
     private String enpassantable;
+    private String castlingRights;
     private Side sideToMove;
 
     private ArrayList<long[]> pinnedPieces; // [0] = rowPinned, [1] = colPinned, [2] = legal move 'ray'
@@ -40,13 +40,13 @@ public class MoveGenerator {
     public long blackKing = 0L;
 
 
-    public MoveGenerator(Piece[][] board, String enpassantable, Side sideToMove) {
-        this.board = board;
+    public MoveGenerator(long[] board, String enpassantable, String castlingRights, Side sideToMove) {
         this.enpassantable = enpassantable;
+        this.castlingRights = castlingRights;
         this.sideToMove = sideToMove;
         this.pinnedPieces = new ArrayList<>();
 
-        this.fillBitboards();
+        this.fillBitboards(board);
 
         this.kingInCheck = this.kingInCheck();
         this.attackers = this.checkAttackers();
@@ -78,54 +78,114 @@ public class MoveGenerator {
             ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(kingRow, kingCol, kingMovesCoords, false);
             legalMoves.addAll(kingMovesUCI);
         } else {
-            //loop through the board and find all legal moves for each piece and add them to the legalMoves list
-            for (int row = 0; row < 8; row++) {
-                for (int col = 0; col < 8; col++) {
-                    if (this.board[row][col] != null && this.board[row][col].getSide() == this.sideToMove) {
-                        boolean pinned = this.isPinned(row, col);
-                        if (this.board[row][col].getType() == PieceType.PAWN) {
-                            boolean promote = false;
-                            if (row == 6 && this.sideToMove == Side.WHITE) {
-                                promote = true;
-                            } else if (row == 1 && this.sideToMove == Side.BLACK) {
-                                promote = true;
-                            }
-                            long pawnMoves = this.getPawnMovesBitBoard(row, col, inCheck, pinned);
-                            ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
-                            ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(row, col, pawnMovesCoords, promote);
-                            legalMoves.addAll(pawnMovesUCI);
-                        } else if (this.board[row][col].getType() == PieceType.KNIGHT) {
-                            long knightMoves = this.getKnightMovesBitBoard(row, col, inCheck, pinned);
-                            ArrayList<int[]> knightMovesCoords = getCoordinatesFromBitboard(knightMoves);
-                            ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(row, col, knightMovesCoords, false);
-                            legalMoves.addAll(knightMovesUCI);
-                        } else if (this.board[row][col].getType() == PieceType.BISHOP) {
-                            long bishopMoves = this.getBishopMovesBitBoard(row, col, inCheck, pinned);
-                            ArrayList<int[]> bishopMovesCoords = getCoordinatesFromBitboard(bishopMoves);
-                            ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(row, col, bishopMovesCoords, false);
-                            legalMoves.addAll(bishopMovesUCI);
-                        } else if (this.board[row][col].getType() == PieceType.ROOK) {
-                            long rookMoves = this.getRookMovesBitBoard(row, col, inCheck, pinned);
-                            ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
-                            ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(row, col, rookMovesCoords, false);
-                            legalMoves.addAll(rookMovesUCI);
-                        } else if (this.board[row][col].getType() == PieceType.QUEEN) {
-                            long queenMoves = this.getQueenMovesBitBoard(row, col, inCheck, pinned);
-                            ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
-                            ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(row, col, queenMovesCoords, false);
-                            legalMoves.addAll(queenMovesUCI);
-                        } else if (this.board[row][col].getType() == PieceType.KING) {
-                            long kingMoves = this.getKingMovesBitBoard(row, col);
-                            ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
-                            ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(row, col, kingMovesCoords, false);
-                            legalMoves.addAll(kingMovesUCI);
-                        }
+            // if not in double check then get moves for all pieces
+            if (this.sideToMove == Side.WHITE) {
+                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.whitePawns);
+                for (int[] coords : pawnCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    boolean promote = false;
+                    if (coords[0] == 6) {
+                        promote = true;
                     }
+                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
+                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
+                    legalMoves.addAll(pawnMovesUCI);
+                }
+                ArrayList<int[]> knightCoords = getCoordinatesFromBitboard(this.whiteKnights);
+                for (int[] coords : knightCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long knightMoves = this.getKnightMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> knightMovesCoords = getCoordinatesFromBitboard(knightMoves);
+                    ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], knightMovesCoords, false);
+                    legalMoves.addAll(knightMovesUCI);
+                }
+                ArrayList<int[]> bishopCoords = getCoordinatesFromBitboard(this.whiteBishops);
+                for (int[] coords : bishopCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long bishopMoves = this.getBishopMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> bishopMovesCoords = getCoordinatesFromBitboard(bishopMoves);
+                    ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], bishopMovesCoords, false);
+                    legalMoves.addAll(bishopMovesUCI);
+                }
+                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.whiteRooks);
+                for (int[] coords : rookCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
+                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
+                    legalMoves.addAll(rookMovesUCI);
+                }
+                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.whiteQueens);
+                for (int[] coords : queenCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
+                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
+                    legalMoves.addAll(queenMovesUCI);
+                }
+                ArrayList<int[]> kingCoords = getCoordinatesFromBitboard(this.whiteKing);
+                for (int[] coords : kingCoords) {
+                    long kingMoves = this.getKingMovesBitBoard(coords[0], coords[1]);
+                    ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
+                    ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], kingMovesCoords, false);
+                    legalMoves.addAll(kingMovesUCI);
+                }
+            } else {
+                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.blackPawns);
+                for (int[] coords : pawnCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    boolean promote = false;
+                    if (coords[0] == 1) {
+                        promote = true;
+                    }
+                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
+                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
+                    legalMoves.addAll(pawnMovesUCI);
+                }
+                ArrayList<int[]> knightCoords = getCoordinatesFromBitboard(this.blackKnights);
+                for (int[] coords : knightCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long knightMoves = this.getKnightMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> knightMovesCoords = getCoordinatesFromBitboard(knightMoves);
+                    ArrayList<String> knightMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], knightMovesCoords, false);
+                    legalMoves.addAll(knightMovesUCI);
+                }
+                ArrayList<int[]> bishopCoords = getCoordinatesFromBitboard(this.blackBishops);
+                for (int[] coords : bishopCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long bishopMoves = this.getBishopMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> bishopMovesCoords = getCoordinatesFromBitboard(bishopMoves);
+                    ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], bishopMovesCoords, false);
+                    legalMoves.addAll(bishopMovesUCI);
+                }
+                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.blackRooks);
+                for (int[] coords : rookCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
+                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
+                    legalMoves.addAll(rookMovesUCI);
+                }
+                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.blackQueens);
+                for (int[] coords : queenCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
+                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
+                    legalMoves.addAll(queenMovesUCI);
+                }
+                ArrayList<int[]> kingCoords = getCoordinatesFromBitboard(this.blackKing);
+                for (int[] coords : kingCoords) {
+                    long kingMoves = this.getKingMovesBitBoard(coords[0], coords[1]);
+                    ArrayList<int[]> kingMovesCoords = getCoordinatesFromBitboard(kingMoves);
+                    ArrayList<String> kingMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], kingMovesCoords, false);
+                    legalMoves.addAll(kingMovesUCI);
                 }
             }
         }
         
-
         return legalMoves;
         
     }
@@ -277,13 +337,13 @@ public class MoveGenerator {
 
         long legalMoves = 0L;
 
-        if (this.board[attackerRow][attackerCol].getType() == PieceType.ROOK) {
+        if ((attacker & this.blackRooks) != 0L || (attacker & this.whiteRooks) != 0L) {
             legalMoves = this.getRookMovesBitBoard(kingRow, kingCol, false, false);
             legalMoves &= this.getRookMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
-        } else if (this.board[attackerRow][attackerCol].getType() == PieceType.BISHOP) {
+        } else if ((attacker & this.blackBishops) != 0L || (attacker & this.whiteBishops) != 0L) {
             legalMoves = this.getBishopMovesBitBoard(kingRow, kingCol, false, false);
             legalMoves &= this.getBishopMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
-        } else if (this.board[attackerRow][attackerCol].getType() == PieceType.QUEEN) {
+        } else if ((attacker & this.blackQueens) != 0L || (attacker & this.whiteQueens) != 0L) {
             //if queen is not on same file or rank, the bishop moves, otherwise the rook moves
             if (attackerRow != kingRow && attackerCol != kingCol) {
                 legalMoves = this.getBishopMovesBitBoard(kingRow, kingCol, false, false);
@@ -292,9 +352,9 @@ public class MoveGenerator {
                 legalMoves = this.getRookMovesBitBoard(kingRow, kingCol, false, false);
                 legalMoves &= this.getRookMovesBitBoard(attackerRow, attackerCol, false, false) | attacker;
             }
-        } else if (this.board[attackerRow][attackerCol].getType() == PieceType.KNIGHT) {
+        } else if ((attacker & this.blackKnights) != 0L || (attacker & this.whiteKnights) != 0L) {
             legalMoves = attacker;
-        } else if (this.board[attackerRow][attackerCol].getType() == PieceType.PAWN) {
+        } else if ((attacker & this.blackPawns) != 0L || (attacker & this.whitePawns) != 0L) {
             legalMoves = attacker;
         }
 
@@ -463,58 +523,49 @@ public class MoveGenerator {
 
         //if king is not in check then check for castling moves
         if (this.sideToMove == Side.WHITE) {
-            if (row == 0 && col == 4 && !this.board[0][4].getHasMoved()) {
-                if (this.board[0][7] != null) {
-                    if (this.board[0][7].getType() == PieceType.ROOK && !this.board[0][7].getHasMoved()) {
-                        if (((this.whitePieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 6)) & 1L) == 0L) {
-                            if (((this.blackPieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 6)) & 1L) == 0L) {
-                                if (((coveredByOppKing >> (0 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 6)) & 1L) == 0L) {
-                                    if (!this.kingInCheckAfterMove(0, 5) && !this.kingInCheckAfterMove(0, 6)) {
-                                        kingmoves |= 1L << (0 * 8 + 6);
-                                    }
+            if (row == 0 && col == 4 && (this.castlingRights.contains("K") || this.castlingRights.contains("Q"))) {
+                if ((((this.whiteRooks >> (0 * 8 + 7)) & 1L) > 0) && this.castlingRights.contains("K")) {
+                    if (((this.whitePieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 6)) & 1L) == 0L) {
+                        if (((this.blackPieces >> (0 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 6)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (0 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 6)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(0, 5) && !this.kingInCheckAfterMove(0, 6)) {
+                                    kingmoves |= 1L << (0 * 8 + 6);
                                 }
                             }
                         }
                     }
                 }
-                if (this.board[0][0] != null) {
-                    if (this.board[0][0].getType() == PieceType.ROOK && !this.board[0][0].getHasMoved()) {
-                        if (((this.whitePieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 2)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 1)) & 1L) == 0L) {
-                            if (((this.blackPieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 2)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 1)) & 1L) == 0L) {
-                                if (((coveredByOppKing >> (0 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 2)) & 1L) == 0L) {
-                                    if (!this.kingInCheckAfterMove(0, 3) && !this.kingInCheckAfterMove(0, 2)) {
-                                        kingmoves |= 1L << (0 * 8 + 2);
-                                    }
+                if ((((this.whiteRooks >> (0 * 8 + 0)) & 1L) > 0) && this.castlingRights.contains("Q")) {
+                    if (((this.whitePieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 2)) & 1L) == 0L && ((this.whitePieces >> (0 * 8 + 1)) & 1L) == 0L) {
+                        if (((this.blackPieces >> (0 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 2)) & 1L) == 0L && ((this.blackPieces >> (0 * 8 + 1)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (0 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (0 * 8 + 2)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(0, 3) && !this.kingInCheckAfterMove(0, 2)) {
+                                    kingmoves |= 1L << (0 * 8 + 2);
                                 }
                             }
                         }
                     }
                 }
-                
             }
         } else {
-            if (row == 7 && col == 4 && !this.board[7][4].getHasMoved()) {
-                if (this.board[7][7] != null) {
-                    if (this.board[7][7].getType() == PieceType.ROOK && !this.board[7][7].getHasMoved()) {
-                        if (((this.blackPieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 6)) & 1L) == 0L) {
-                            if (((this.whitePieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 6)) & 1L) == 0L) {
-                                if (((coveredByOppKing >> (7 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 6)) & 1L) == 0L) {
-                                    if (!this.kingInCheckAfterMove(7, 5) && !this.kingInCheckAfterMove(7, 6)) {
-                                        kingmoves |= 1L << (7 * 8 + 6);
-                                    }
+            if (row == 7 && col == 4 && (this.castlingRights.contains("k") || this.castlingRights.contains("q"))) {
+                if ((((this.blackRooks >> (7 * 8 + 7)) & 1L) > 0) && this.castlingRights.contains("k")) {
+                    if (((this.blackPieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 6)) & 1L) == 0L) {
+                        if (((this.whitePieces >> (7 * 8 + 5)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 6)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (7 * 8 + 5)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 6)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(7, 5) && !this.kingInCheckAfterMove(7, 6)) {
+                                    kingmoves |= 1L << (7 * 8 + 6);
                                 }
                             }
                         }
                     }
                 }
-                if (this.board[7][0] != null) {
-                    if (this.board[7][0].getType() == PieceType.ROOK && !this.board[7][0].getHasMoved()) {
-                        if (((this.blackPieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 2)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 1)) & 1L) == 0L) {
-                            if (((this.whitePieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 2)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 1)) & 1L) == 0L) {
-                                if (((coveredByOppKing >> (7 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 2)) & 1L) == 0L) {
-                                    if (!this.kingInCheckAfterMove(7, 3) && !this.kingInCheckAfterMove(7, 2)) {
-                                        kingmoves |= 1L << (7 * 8 + 2);
-                                    }
+                if ((((this.blackRooks >> (7 * 8 + 0)) & 1L) > 0) && this.castlingRights.contains("q")) {
+                    if (((this.blackPieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 2)) & 1L) == 0L && ((this.blackPieces >> (7 * 8 + 1)) & 1L) == 0L) {
+                        if (((this.whitePieces >> (7 * 8 + 3)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 2)) & 1L) == 0L && ((this.whitePieces >> (7 * 8 + 1)) & 1L) == 0L) {
+                            if (((coveredByOppKing >> (7 * 8 + 3)) & 1L) == 0L && ((coveredByOppKing >> (7 * 8 + 2)) & 1L) == 0L) {
+                                if (!this.kingInCheckAfterMove(7, 3) && !this.kingInCheckAfterMove(7, 2)) {
+                                    kingmoves |= 1L << (7 * 8 + 2);
                                 }
                             }
                         }
@@ -669,7 +720,7 @@ public class MoveGenerator {
         }
 
         // en passant
-        if (!this.enpassantable.equals("")) {
+        if (!this.enpassantable.equals("-")) {
 
             if (this.sideToMove == Side.WHITE) {
                 if (row == 4) {
@@ -731,12 +782,13 @@ public class MoveGenerator {
             // special check for if an enpassant capture gets rid of check
             long enpassantGetRidOfCheck = 0L;
             
-            if (!this.enpassantable.equals("")) {
+            if (!this.enpassantable.equals("-")) {
                 ArrayList<int[]> attackerCoords = getCoordinatesFromBitboard(this.attackers);
                 int attackerRow = attackerCoords.get(0)[0];
                 int attackerCol = attackerCoords.get(0)[1];
 
-                if (this.board[attackerRow][attackerCol].getType() == PieceType.PAWN) {
+                if (((((whitePawns >> (attackerRow * 8 + attackerCol)) & 1L) > 0) 
+                        || (((blackPawns >> (attackerRow * 8 + attackerCol)) & 1L) > 0))) {
                     if (MoveParser.getFromRow(this.enpassantable) == attackerRow && MoveParser.getFromCol(this.enpassantable) == attackerCol) {
                         if (this.sideToMove == Side.WHITE) {
                             if (((pawnMoves >> ((attackerRow + 1) * 8 + attackerCol)) & 1L) > 0) {
@@ -760,6 +812,20 @@ public class MoveGenerator {
 
 
     private boolean enPassantLeadsToCheck(int row, int col, int shift, int side) {
+
+        //if at row col there is king (in case we are looking for pawn 
+        // moves from the king position in other functions we don't 
+        // want to place extra pawns), then return false
+
+        if (side == 1) {
+            if (((this.whiteKing >> (row * 8 + col)) & 1L) > 0) {
+                return false;
+            }
+        } else {
+            if (((this.blackKing >> (row * 8 + col)) & 1L) > 0) {
+                return false;
+            }
+        }
         
         //remove pawns off the board
         if (side == 1) {
@@ -1168,61 +1234,25 @@ public class MoveGenerator {
     }
 
 
-    private void fillBitboards() {
-        // Fill bitboards by looping through the board
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = this.board[row][col];
-                long bit = 1L << (row * 8 + col);
-                if (piece != null) {
-                    if (piece.getSide() == Side.WHITE) {
-                        this.whitePieces |= bit;
-                        switch (piece.getType()) {
-                            case PAWN:
-                                this.whitePawns |= bit;
-                                break;
-                            case KNIGHT:
-                                this.whiteKnights |= bit;
-                                break;
-                            case BISHOP:
-                                this.whiteBishops |= bit;
-                                break;
-                            case ROOK:
-                                this.whiteRooks |= bit;
-                                break;
-                            case QUEEN:
-                                this.whiteQueens |= bit;
-                                break;
-                            case KING:
-                                this.whiteKing |= bit;
-                                break;
-                        }
-                    } else {
-                        this.blackPieces |= bit;
-                        switch (piece.getType()) {
-                            case PAWN:
-                                this.blackPawns |= bit;
-                                break;
-                            case KNIGHT:
-                                this.blackKnights |= bit;
-                                break;
-                            case BISHOP:
-                                this.blackBishops |= bit;
-                                break;
-                            case ROOK:
-                                this.blackRooks |= bit;
-                                break;
-                            case QUEEN:
-                                this.blackQueens |= bit;
-                                break;
-                            case KING:
-                                this.blackKing |= bit;
-                                break;
-                        }
-                    }
-                }
-            }
-        }
+    private void fillBitboards(long[] board) {
+        this.whitePawns = board[0];
+        this.whiteKnights = board[1];
+        this.whiteBishops = board[2];
+        this.whiteRooks = board[3];
+        this.whiteQueens = board[4];
+        this.whiteKing = board[5];
+
+        this.blackPawns = board[6];
+        this.blackKnights = board[7];
+        this.blackBishops = board[8];
+        this.blackRooks = board[9];
+        this.blackQueens = board[10];
+        this.blackKing = board[11];
+
+        this.whitePieces = this.whitePawns | this.whiteKnights | this.whiteBishops | this.whiteRooks | this.whiteQueens | this.whiteKing;
+        this.blackPieces = this.blackPawns | this.blackKnights | this.blackBishops | this.blackRooks | this.blackQueens | this.blackKing;
+        
     }
+    
 
 }

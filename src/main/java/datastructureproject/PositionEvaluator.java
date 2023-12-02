@@ -173,7 +173,7 @@ public class PositionEvaluator {
     //for black pieces we can just use the index directly where index is (row * 8 + col)
     
 
-    public static int evaluatePosition(Piece[][] board, Side side) {
+    public static int evaluatePosition(long[] board, Side side) {
 
         score = 0;
 
@@ -286,59 +286,21 @@ public class PositionEvaluator {
     }
 
 
-    private static void fillBitboards(Piece[][] board) {
-        // Fill bitboards by looping through the board
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board[row][col];
-                long bit = 1L << (row * 8 + col);
-                if (piece != null) {
-                    if (piece.getSide() == Side.WHITE) {
-                        switch (piece.getType()) {
-                            case PAWN:
-                                whitePawns |= bit;
-                                break;
-                            case KNIGHT:
-                                whiteKnights |= bit;
-                                break;
-                            case BISHOP:
-                                whiteBishops |= bit;
-                                break;
-                            case ROOK:
-                                whiteRooks |= bit;
-                                break;
-                            case QUEEN:
-                                whiteQueens |= bit;
-                                break;
-                            case KING:
-                                whiteKing |= bit;
-                                break;
-                        }
-                    } else {
-                        switch (piece.getType()) {
-                            case PAWN:
-                                blackPawns |= bit;
-                                break;
-                            case KNIGHT:
-                                blackKnights |= bit;
-                                break;
-                            case BISHOP:
-                                blackBishops |= bit;
-                                break;
-                            case ROOK:
-                                blackRooks |= bit;
-                                break;
-                            case QUEEN:
-                                blackQueens |= bit;
-                                break;
-                            case KING:
-                                blackKing |= bit;
-                                break;
-                        }
-                    }
-                }
-            }
-        }
+    private static void fillBitboards(long[] board) {
+        whitePawns = board[0];
+        whiteKnights = board[1];
+        whiteBishops = board[2];
+        whiteRooks = board[3];
+        whiteQueens = board[4];
+        whiteKing = board[5];
+
+        blackPawns = board[6];
+        blackKnights = board[7];
+        blackBishops = board[8];
+        blackRooks = board[9];
+        blackQueens = board[10];
+        blackKing = board[11];
+        
     }
 
 

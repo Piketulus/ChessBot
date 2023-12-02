@@ -27,24 +27,26 @@ public class PerformanceTest {
 
         //https://www.chessprogramming.org/Perft_Results for perft test positions and results
 
-        //pt.perft("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 5, false);
+        //pt.perft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", 5, false);
 
         //pt.getEvaluation("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P2N/P1NP4/1PP1bPPP/R4RK1 w - - 0 11");
 
+        
         long startTime = System.nanoTime();
-        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 5);
+        String move = pt.nextMove("rn2kb1r/pp3ppp/2p2n2/q3pb2/B7/2NPBN2/PPP2PPP/R2QK2R w KQkq - 3 9", 6);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         System.out.println("Time taken: " + duration + "ms");
         System.out.println("Move: " + move);
         
+
     }
 
 
     public void perft(String fen, int depth, boolean divide) {
         //check how many positions are generated in a certain depth and how long it takes (Perft)
         if (!divide) {
-            ChessBoard board = new ChessBoard();
+            BitChessBoard board = new BitChessBoard();
             board.fenToBoard(fen);
             
             Side side = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
@@ -60,7 +62,7 @@ public class PerformanceTest {
             System.out.println("Positions generated: " + nodes);
         } else {
             //display(print) the number of positions generated for each move from the initial position
-            ChessBoard board = new ChessBoard();
+            BitChessBoard board = new BitChessBoard();
             board.fenToBoard(fen);
 
             Side side = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
@@ -68,11 +70,11 @@ public class PerformanceTest {
 
             PerformanceTest pt = new PerformanceTest();
 
-            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), side);
+            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, side);
             ArrayList<String> moves = mg.getMoves();
 
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 long nodes = pt.getNodesGenerated(depth - 1, newBoard, opSide);
                 //board.undoMove();
@@ -84,18 +86,18 @@ public class PerformanceTest {
     }
 
 
-    public long getNodesGenerated(int depth, ChessBoard board, Side side) {
+    public long getNodesGenerated(int depth, BitChessBoard board, Side side) {
         // recursive method to generate all moves to a certain depth
         if (depth == 0) {
             return 1;
         }
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), side);
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, side);
         Side opposite = side == Side.WHITE ? Side.BLACK : Side.WHITE;
         ArrayList<String> moves = mg.getMoves();
         long nodes = 0;
         for (String move : moves) {
-            ChessBoard newBoard = new ChessBoard(board);
+            BitChessBoard newBoard = new BitChessBoard(board);
             newBoard.makeMove(move);
             nodes += getNodesGenerated(depth - 1, newBoard, opposite);
             //board.undoMove();
@@ -108,7 +110,7 @@ public class PerformanceTest {
 
     public void getEvaluation(String fen) {
         //get the evaluation of a position
-        ChessBoard board = new ChessBoard();
+        BitChessBoard board = new BitChessBoard();
         board.fenToBoard(fen);
         Side side = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
         int score = PositionEvaluator.evaluatePosition(board.getBoard(), side);
@@ -121,20 +123,20 @@ public class PerformanceTest {
      */
     public String nextMove(String fen, int depth) {
 
-        ChessBoard board = new ChessBoard();
+        BitChessBoard board = new BitChessBoard();
         board.fenToBoard(fen);
         Side playing = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
         
         Side opSide = playing == Side.WHITE ? Side.BLACK : Side.WHITE;
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), playing);
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, playing);
         ArrayList<String> moves = mg.getMoves();
 
         if (moves.size() != 0) {
             String bestMove = moves.get(0);
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
                                              Integer.MAX_VALUE, opSide, playing);
@@ -151,18 +153,18 @@ public class PerformanceTest {
     }
 
 
-    private String iterDeepNextMove(int maxDepth, ChessBoard board, Side turn, Side playing) {
+    private String iterDeepNextMove(int maxDepth, BitChessBoard board, Side turn, Side playing) {
         String bestMove = null;
         int bestScore = Integer.MIN_VALUE;
         for (int d = 1; d <= maxDepth; d++) {
-            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), turn);
+            MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
             Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
             ArrayList<String> moves = mg.getMoves();
             if (moves.size() == 0) {
                 break;
             }
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, Integer.MIN_VALUE, 
                                              Integer.MAX_VALUE, opposite, playing);
@@ -176,12 +178,12 @@ public class PerformanceTest {
     }
 
 
-    private int alphaBetaMinimax(int d, ChessBoard board, int alpha, int beta, Side turn, Side playing) {
+    private int alphaBetaMinimax(int d, BitChessBoard board, int alpha, int beta, Side turn, Side playing) {
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
         }
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), turn);
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
         Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
         ArrayList<String> moves = mg.getMoves();
 
@@ -198,7 +200,7 @@ public class PerformanceTest {
         if (turn == playing) {
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
                 bestScore = Math.max(bestScore, score);
@@ -211,7 +213,7 @@ public class PerformanceTest {
         } else {
             int bestScore = Integer.MAX_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
                 bestScore = Math.min(bestScore, score);
@@ -225,11 +227,11 @@ public class PerformanceTest {
     }
 
 
-    private ArrayList<Integer> orderByHeuristic(ArrayList<String> moves, ChessBoard board, Side side) {
+    private ArrayList<Integer> orderByHeuristic(ArrayList<String> moves, BitChessBoard board, Side side) {
         ArrayList<Integer> orderedIndices = new ArrayList();
         ArrayList<Integer> scores = new ArrayList();
         for (String move : moves) {
-            ChessBoard newBoard = new ChessBoard(board);
+            BitChessBoard newBoard = new BitChessBoard(board);
             newBoard.makeMove(move);
             int score = PositionEvaluator.evaluatePosition(newBoard.getBoard(), side);
             scores.add(score);

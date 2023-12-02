@@ -7,11 +7,11 @@ import chess.model.Side;
 
 public class PositionEvaluatorTest {
 
-    ChessBoard board;
+    BitChessBoard board;
 
     @Before
     public void setUp() {
-        board = new ChessBoard();
+        board = new BitChessBoard();
     }
 
     @After

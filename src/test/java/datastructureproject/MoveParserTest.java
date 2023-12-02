@@ -40,12 +40,6 @@ public class MoveParserTest {
     }
 
     @Test
-    public void testGetPromotionPiece() {
-        String move = "a7a8q";
-        assertEquals(PieceType.QUEEN, MoveParser.getPromotionPiece(move));
-    }
-
-    @Test
     public void testCoordsToMove() {
         int fromRow = 0;
         int fromCol = 0;

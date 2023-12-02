@@ -34,22 +34,6 @@ public class MoveParser {
         return move.length() == 5;
     }
 
-    public static PieceType getPromotionPiece(String move) {
-        //return the promotion piece
-        switch (move.charAt(4)) {
-            case 'q':
-                return PieceType.QUEEN;
-            case 'r':
-                return PieceType.ROOK;
-            case 'b':
-                return PieceType.BISHOP;
-            case 'n':
-                return PieceType.KNIGHT;
-            default:
-                throw new IllegalArgumentException("Invalid promotion piece: " + move.charAt(4));
-        }
-    }
-
 
     public static int letterToNumber(char letter) {
         switch (letter) {

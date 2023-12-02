@@ -8,19 +8,27 @@ import chess.model.Side;
 
 public class PiketulusBot implements ChessBot {
 
-    private ChessBoard board;
+    private BitChessBoard board;
     private int depth = 5;
     private boolean start = true;
 
 
     public PiketulusBot() {
-        this.board = new ChessBoard();
+        this.board = new BitChessBoard();
     }
     
 
     public String nextMove(GameState gs) {
         
         Side opSide = gs.playing == Side.WHITE ? Side.BLACK : Side.WHITE;
+
+        if (gs.moves.size() == 0 && gs.playing == Side.WHITE) {
+            this.board = new BitChessBoard();
+            this.start = true;
+        } else if (gs.moves.size() == 1 && gs.playing == Side.BLACK) {
+            this.board = new BitChessBoard();
+            this.start = true;
+        }
 
         if (start) {
             for (String move : gs.moves) {
@@ -32,14 +40,14 @@ public class PiketulusBot implements ChessBot {
             board.makeMove(lastMove);
         }
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), gs.playing);
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, gs.playing);
         ArrayList<String> moves = mg.getMoves();
 
         if (moves.size() != 0) {
             String bestMove = moves.get(0);
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(depth - 1, newBoard, Integer.MIN_VALUE, 
                                              Integer.MAX_VALUE, opSide, gs.playing);
@@ -56,13 +64,13 @@ public class PiketulusBot implements ChessBot {
     }
 
 
-    private int alphaBetaMinimax(int d, ChessBoard board, int alpha, int beta, Side turn, Side playing) {
+    private int alphaBetaMinimax(int d, BitChessBoard board, int alpha, int beta, Side turn, Side playing) {
 
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
         }
 
-        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.getEnpassantable(), turn);
+        MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
         Side opposite = turn == Side.WHITE ? Side.BLACK : Side.WHITE;
         ArrayList<String> moves = mg.getMoves();
 
@@ -79,7 +87,7 @@ public class PiketulusBot implements ChessBot {
         if (turn == playing) {
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
                 bestScore = Math.max(bestScore, score);
@@ -92,7 +100,7 @@ public class PiketulusBot implements ChessBot {
         } else {
             int bestScore = Integer.MAX_VALUE;
             for (String move : moves) {
-                ChessBoard newBoard = new ChessBoard(board);
+                BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
                 bestScore = Math.min(bestScore, score);
