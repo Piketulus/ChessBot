@@ -18,7 +18,11 @@ public class PiketulusBot implements ChessBot {
         this.board = new BitChessBoard();
     }
     
-
+    /**
+     * Returns the next move for the bot given the current game state.
+     * @param gs current game state
+     * @return next move for the bot
+     */
     public String nextMove(GameState gs) {
         
         if (gs.moves.size() == 0 && gs.playing == Side.WHITE) {
@@ -49,7 +53,14 @@ public class PiketulusBot implements ChessBot {
         }
     }
 
-
+    /**
+     * Finds the best move for the bot using iterative deepening.
+     * @param maxDepth maximum depth for the search
+     * @param board current board state
+     * @param turn side to move
+     * @param playing side that bot is playing
+     * @return best move for the bot
+     */
     private String iterDeepNextMove(int maxDepth, BitChessBoard board, Side turn, Side playing) {
         String bestFoundMove = null;
         MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
@@ -80,7 +91,16 @@ public class PiketulusBot implements ChessBot {
         return bestFoundMove;
     }
 
-
+    /**
+     * Finds the best move for the bot using alpha-beta pruning at a given depth.
+     * @param d depth of the search
+     * @param board current board state
+     * @param alpha alpha value
+     * @param beta beta value
+     * @param turn side to move
+     * @param playing side that bot is playing
+     * @return score of the best move
+     */
     private int alphaBetaMinimax(int d, BitChessBoard board, int alpha, int beta, Side turn, Side playing) {
 
         if (d == 0) {

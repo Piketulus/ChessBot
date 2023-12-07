@@ -362,6 +362,12 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Gets moves for a king in the given position.
+     * @param row row of the king
+     * @param col column of the king
+     * @return bitboard of legal moves
+     */
     private long getKingMovesBitBoard(int row, int col) {
 
         long kingmoves = 0L;
@@ -666,6 +672,14 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Gets moves for a pawn in the given position.
+     * @param row row of the pawn
+     * @param col column of the pawn
+     * @param inCheck whether the king is in check
+     * @param pinned whether the pawn is pinned
+     * @return bitboard of legal moves
+     */
     private long getPawnMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long pawnMoves = 0L;
 
@@ -811,6 +825,16 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Helper function for getPawnMovesBitBoard()
+     * Checks if an en passant move leads to a discovered check
+     * in this case the en passant move is not legal
+     * @param row row of the pawn
+     * @param col column of the pawn
+     * @param shift shift to the left or right where the en passantable pawn is
+     * @param side side moving
+     * @return true if the en passant move leads to check, false otherwise
+     */
     private boolean enPassantLeadsToCheck(int row, int col, int shift, int side) {
 
         //if at row col there is king (in case we are looking for pawn 
@@ -869,6 +893,14 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Gets moves for a bishop in the given position.
+     * @param row row of the bishop
+     * @param col column of the bishop
+     * @param inCheck whether the king is in check
+     * @param pinned whether the bishop is pinned
+     * @return bitboard of legal moves
+     */
     private long getBishopMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long bishopMoves = 0L;
 
@@ -975,6 +1007,14 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Gets moves for a rook in the given position.
+     * @param row row of the rook
+     * @param col column of the rook
+     * @param inCheck whether the king is in check
+     * @param pinned whether the rook is pinned
+     * @return bitboard of legal moves
+     */
     private long getRookMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long rookMoves = 0L;
 
@@ -1081,11 +1121,28 @@ public class MoveGenerator {
     }
 
 
+    /**
+     * Gets moves for a queen in the given position.
+     * Easily done by combining the moves of a rook and a bishop.
+     * @param row row of the queen
+     * @param col column of the queen
+     * @param inCheck whether the king is in check
+     * @param pinned whether the queen is pinned
+     * @return bitboard of legal moves
+     */
     private long getQueenMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         return this.getRookMovesBitBoard(row, col, inCheck, pinned) | this.getBishopMovesBitBoard(row, col, inCheck, pinned);
     }
 
 
+    /**
+     * Gets moves for a knight in the given position.
+     * @param row row of the knight
+     * @param col column of the knight
+     * @param inCheck whether the king is in check
+     * @param pinned whether the knight is pinned
+     * @return bitboard of legal moves
+     */
     private long getKnightMovesBitBoard(int row, int col, boolean inCheck, boolean pinned) {
         long knightMoves = 0L;
 
@@ -1220,7 +1277,11 @@ public class MoveGenerator {
     }
 
 
-    // Function to get the coordinates of the bits on a bitboard
+    /**
+     * Gets the coordinates of bits set to 1 in a bitboard.
+     * @param bitboard bitboard to get coordinates from
+     * @return ArrayList of coordinates
+     */
     public static ArrayList<int[]> getCoordinatesFromBitboard(long bitboard) {
         ArrayList<int[]> bitboardCoordinates = new ArrayList<>();
 

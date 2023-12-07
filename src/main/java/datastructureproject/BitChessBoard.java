@@ -1,5 +1,10 @@
 package datastructureproject;
 
+
+/**
+ * A class for representing a chess board using bitboards.
+ * Keeps track of the position for the bot in order to search for next moves.
+ */
 public class BitChessBoard {
 
     public String enpassantable;
@@ -27,6 +32,7 @@ public class BitChessBoard {
     }
 
 
+    // copy constructor
     public BitChessBoard(BitChessBoard board) {
         this.enpassantable = board.enpassantable;
         this.castlingRights = board.castlingRights;
@@ -46,12 +52,18 @@ public class BitChessBoard {
 
 
     public long[] getBoard() {
-        long[] board = {this.whitePawns, this.whiteKnights, this.whiteBishops, this.whiteRooks, this.whiteQueens, this.whiteKing,
-                        this.blackPawns, this.blackKnights, this.blackBishops, this.blackRooks, this.blackQueens, this.blackKing};
+        long[] board = {this.whitePawns, this.whiteKnights, this.whiteBishops, 
+                        this.whiteRooks, this.whiteQueens, this.whiteKing,
+                        this.blackPawns, this.blackKnights, this.blackBishops, 
+                        this.blackRooks, this.blackQueens, this.blackKing};
         return board;
     }
 
 
+    /**
+     * Makes a move on the board, assumes that the move is legal.
+     * @param move move to be made
+     */
     public void makeMove(String move) {
 
         int fromRow = MoveParser.getFromRow(move);
@@ -124,6 +136,7 @@ public class BitChessBoard {
         } 
 
         //special cases for castling moves:
+        //since we need to move both the king and the rook
 
         if ((((this.whiteKing >> (fromRow * 8 + fromCol)) & 1L) > 0)) {
             if (move.equals("e1g1")) {
@@ -202,7 +215,7 @@ public class BitChessBoard {
             this.enpassantable = "-";
         }
 
-        //set castling rights:
+        //update castling rights in case of king or rook move:
 
         if ((((this.whiteRooks >> (fromRow * 8 + fromCol)) & 1L) > 0)) {
             if (fromRow == 0 && fromCol == 0 && this.castlingRights.contains("Q")) {
@@ -236,7 +249,7 @@ public class BitChessBoard {
             }
         }
 
-        //move piece:
+        //For non special cases, just move the piece:
 
         long fromPiece = 1L << (8 * fromRow + fromCol);
         long toPiece = 1L << (8 * toRow + toCol);
@@ -308,6 +321,10 @@ public class BitChessBoard {
     }
 
 
+    /**
+     * Makes a series of moves on the board, assumes that the moves are legal.
+     * @param moves moves to be made
+     */
     public void makeMoves(String[] moves) {
         for (String move : moves) {
             this.makeMove(move);
@@ -345,6 +362,11 @@ public class BitChessBoard {
     }
 
 
+    /**
+     * Converts a FEN string to a board.
+     * Useful for quickly setting up a board for testing.
+     * @param fen FEN string
+     */
     public void fenToBoard(String fen) {
 
         this.resetBoard();
@@ -353,7 +375,7 @@ public class BitChessBoard {
         String[] rows = fenParts[0].split("/");
 
         for (int i = 0; i < rows.length; i++) {
-            String row = rows[7-i];
+            String row = rows[7 - i];
             int j = 0;
             for (int k = 0; k < row.length(); k++) {
                 char c = row.charAt(k);
@@ -479,7 +501,7 @@ public class BitChessBoard {
         }
 
         for (int i = 0; i < 8; i++) {
-            System.out.println(rows[7-i]);
+            System.out.println(rows[7 - i]);
         }
 
     }

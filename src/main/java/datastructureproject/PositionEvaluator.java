@@ -32,6 +32,8 @@ public class PositionEvaluator {
     private static final int mg_values[] = {82, 337, 365, 477, 1025, 0};
     private static final int eg_values[] = {94, 281, 297, 512, 936, 0};
 
+    // Piece square tables for middle and end game:
+    // adds or removes value from the piece value based on the position of the piece
     private static final int mg_pawn_table[] = {
         0, 0, 0, 0, 0, 0, 0, 0,
         98, 134, 61, 95, 68, 126, 34, -11,
@@ -173,6 +175,12 @@ public class PositionEvaluator {
     //for black pieces we can just use the index directly where index is (row * 8 + col)
     
 
+    /**
+     * Evaluates a score for a given position. To be called from outside the class.
+     * @param board current board state
+     * @param side side to move
+     * @return score of the position
+     */
     public static int evaluatePosition(long[] board, Side side) {
 
         score = 0;
@@ -189,7 +197,10 @@ public class PositionEvaluator {
         return score;
     }
 
-
+    /**
+     * Evaluates the material and piece square tables for a given position.
+     * @return material and piece square table score
+     */
     private static int evaluateMaterialAndTables() {
         int gamePhase = 0;
 

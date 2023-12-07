@@ -43,8 +43,14 @@ public class PerformanceTest {
     }
 
 
+    /**
+     * Method for testing the number of positions generated for a given position and depth
+     * Useful for debugging
+     * @param fen FEN string of the position
+     * @param depth depth to search to
+     * @param divide whether to display the number of positions generated for each move from the initial position
+     */
     public void perft(String fen, int depth, boolean divide) {
-        //check how many positions are generated in a certain depth and how long it takes (Perft)
         if (!divide) {
             BitChessBoard board = new BitChessBoard();
             board.fenToBoard(fen);
@@ -108,8 +114,8 @@ public class PerformanceTest {
     }
 
 
-    public void getEvaluation(String fen) {
-        //get the evaluation of a position
+    // gets the evaluation of a position
+    public void getEvaluation(String fen) { 
         BitChessBoard board = new BitChessBoard();
         board.fenToBoard(fen);
         Side side = fen.split(" ")[1].equals("w") ? Side.WHITE : Side.BLACK;
@@ -118,9 +124,9 @@ public class PerformanceTest {
     }
 
 
-    /**
-     * Methods copied (only slightly modified) from PiketulusBot.java for testing purposes
-     */
+
+    // Following methods copied (only slightly modified) from PiketulusBot.java for testing purposes
+    
     public String nextMove(String fen, int depth) {
 
         BitChessBoard board = new BitChessBoard();
