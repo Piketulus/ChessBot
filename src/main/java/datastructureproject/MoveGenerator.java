@@ -80,21 +80,17 @@ public class MoveGenerator {
         } else {
             // if not in double check then get moves for all pieces
             if (this.sideToMove == Side.WHITE) {
-                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.whiteRooks);
-                for (int[] coords : rookCoords) {
+                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.whitePawns);
+                for (int[] coords : pawnCoords) {
                     boolean pinned = this.isPinned(coords[0], coords[1]);
-                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
-                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
-                    legalMoves.addAll(rookMovesUCI);
-                }
-                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.whiteQueens);
-                for (int[] coords : queenCoords) {
-                    boolean pinned = this.isPinned(coords[0], coords[1]);
-                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
-                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
-                    legalMoves.addAll(queenMovesUCI);
+                    boolean promote = false;
+                    if (coords[0] == 6) {
+                        promote = true;
+                    }
+                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
+                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
+                    legalMoves.addAll(pawnMovesUCI);
                 }
                 ArrayList<int[]> knightCoords = getCoordinatesFromBitboard(this.whiteKnights);
                 for (int[] coords : knightCoords) {
@@ -112,17 +108,21 @@ public class MoveGenerator {
                     ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], bishopMovesCoords, false);
                     legalMoves.addAll(bishopMovesUCI);
                 }
-                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.whitePawns);
-                for (int[] coords : pawnCoords) {
+                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.whiteRooks);
+                for (int[] coords : rookCoords) {
                     boolean pinned = this.isPinned(coords[0], coords[1]);
-                    boolean promote = false;
-                    if (coords[0] == 6) {
-                        promote = true;
-                    }
-                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
-                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
-                    legalMoves.addAll(pawnMovesUCI);
+                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
+                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
+                    legalMoves.addAll(rookMovesUCI);
+                }
+                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.whiteQueens);
+                for (int[] coords : queenCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
+                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
+                    legalMoves.addAll(queenMovesUCI);
                 }
                 ArrayList<int[]> kingCoords = getCoordinatesFromBitboard(this.whiteKing);
                 for (int[] coords : kingCoords) {
@@ -132,21 +132,17 @@ public class MoveGenerator {
                     legalMoves.addAll(kingMovesUCI);
                 }
             } else {
-                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.blackRooks);
-                for (int[] coords : rookCoords) {
+                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.blackPawns);
+                for (int[] coords : pawnCoords) {
                     boolean pinned = this.isPinned(coords[0], coords[1]);
-                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
-                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
-                    legalMoves.addAll(rookMovesUCI);
-                }
-                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.blackQueens);
-                for (int[] coords : queenCoords) {
-                    boolean pinned = this.isPinned(coords[0], coords[1]);
-                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
-                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
-                    legalMoves.addAll(queenMovesUCI);
+                    boolean promote = false;
+                    if (coords[0] == 1) {
+                        promote = true;
+                    }
+                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
+                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
+                    legalMoves.addAll(pawnMovesUCI);
                 }
                 ArrayList<int[]> knightCoords = getCoordinatesFromBitboard(this.blackKnights);
                 for (int[] coords : knightCoords) {
@@ -164,17 +160,21 @@ public class MoveGenerator {
                     ArrayList<String> bishopMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], bishopMovesCoords, false);
                     legalMoves.addAll(bishopMovesUCI);
                 }
-                ArrayList<int[]> pawnCoords = getCoordinatesFromBitboard(this.blackPawns);
-                for (int[] coords : pawnCoords) {
+                ArrayList<int[]> rookCoords = getCoordinatesFromBitboard(this.blackRooks);
+                for (int[] coords : rookCoords) {
                     boolean pinned = this.isPinned(coords[0], coords[1]);
-                    boolean promote = false;
-                    if (coords[0] == 1) {
-                        promote = true;
-                    }
-                    long pawnMoves = this.getPawnMovesBitBoard(coords[0], coords[1], inCheck, pinned);
-                    ArrayList<int[]> pawnMovesCoords = getCoordinatesFromBitboard(pawnMoves);
-                    ArrayList<String> pawnMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], pawnMovesCoords, promote);
-                    legalMoves.addAll(pawnMovesUCI);
+                    long rookMoves = this.getRookMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> rookMovesCoords = getCoordinatesFromBitboard(rookMoves);
+                    ArrayList<String> rookMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], rookMovesCoords, false);
+                    legalMoves.addAll(rookMovesUCI);
+                }
+                ArrayList<int[]> queenCoords = getCoordinatesFromBitboard(this.blackQueens);
+                for (int[] coords : queenCoords) {
+                    boolean pinned = this.isPinned(coords[0], coords[1]);
+                    long queenMoves = this.getQueenMovesBitBoard(coords[0], coords[1], inCheck, pinned);
+                    ArrayList<int[]> queenMovesCoords = getCoordinatesFromBitboard(queenMoves);
+                    ArrayList<String> queenMovesUCI = MoveParser.coordsToMoves(coords[0], coords[1], queenMovesCoords, false);
+                    legalMoves.addAll(queenMovesUCI);
                 }
                 ArrayList<int[]> kingCoords = getCoordinatesFromBitboard(this.blackKing);
                 for (int[] coords : kingCoords) {
