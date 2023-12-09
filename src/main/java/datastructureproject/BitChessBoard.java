@@ -362,6 +362,38 @@ public class BitChessBoard {
     }
 
 
+    // Helper method for Hasher class
+    public int getPieceTypeAtIndex (int index) {
+        if ((((this.whitePawns >> index) & 1L) > 0)) {
+            return 0;
+        } else if ((((this.whiteKnights >> index) & 1L) > 0)) {
+            return 1;
+        } else if ((((this.whiteBishops >> index) & 1L) > 0)) {
+            return 2;
+        } else if ((((this.whiteRooks >> index) & 1L) > 0)) {
+            return 3;
+        } else if ((((this.whiteQueens >> index) & 1L) > 0)) {
+            return 4;
+        } else if ((((this.whiteKing >> index) & 1L) > 0)) {
+            return 5;
+        } else if ((((this.blackPawns >> index) & 1L) > 0)) {
+            return 6;
+        } else if ((((this.blackKnights >> index) & 1L) > 0)) {
+            return 7;
+        } else if ((((this.blackBishops >> index) & 1L) > 0)) {
+            return 8;
+        } else if ((((this.blackRooks >> index) & 1L) > 0)) {
+            return 9;
+        } else if ((((this.blackQueens >> index) & 1L) > 0)) {
+            return 10;
+        } else if ((((this.blackKing >> index) & 1L) > 0)) {
+            return 11;
+        } else {
+            return -1;
+        }
+    }
+
+
     /**
      * Converts a FEN string to a board.
      * Useful for quickly setting up a board for testing.

@@ -3,6 +3,7 @@ package datastructureproject;
 import chess.bot.ChessBot;
 import chess.engine.GameState;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import chess.model.Side;
@@ -15,6 +16,9 @@ public class PerformanceTest {
 
     private ChessBot bot;
     private List<GameState> gsList = new ArrayList();
+
+    private HashMap<Long, String[]> tranpositionTable = new HashMap<>();
+    private Hasher hasher = new Hasher();
 
     public void setGsList(List<GameState> gsList) {
         this.gsList = gsList;
@@ -33,7 +37,7 @@ public class PerformanceTest {
 
         
         long startTime = System.nanoTime();
-        String move = pt.nextMove("8/p7/8/8/1p6/nP1K1k2/P7/6q1 b - - 7 62", 8);
+        String move = pt.nextMove("2rk2r1/pp1nRpBp/8/8/6N1/3P4/PP3PPP/R5K1 b - - 0 23", 8);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         System.out.println("Time taken: " + duration + "ms");
@@ -148,8 +152,11 @@ public class PerformanceTest {
         if (moves.size() == 0) {
             return null;
         }
+
+        this.tranpositionTable.clear();
+
         long startTime = System.currentTimeMillis();
-        for (int d = 1; d <= maxDepth; d++) {
+        for (int d = 2; d <= maxDepth; d++) {
             String bestMove = null;
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
@@ -172,8 +179,22 @@ public class PerformanceTest {
 
 
     private int alphaBetaMinimax(int d, BitChessBoard board, int alpha, int beta, Side turn, Side playing) {
+        
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
+        }
+
+        long hash = this.hasher.getHash(board, turn);
+
+        String lastFoundBestMove = null;
+
+        if (this.tranpositionTable.containsKey(hash)) {
+            String[] entry = this.tranpositionTable.get(hash);
+            if (Integer.parseInt(entry[2]) >= d) {
+                return Integer.parseInt(entry[1]);
+            } else {
+                lastFoundBestMove = entry[0];
+            }
         }
 
         MoveGenerator mg = new MoveGenerator(board.getBoard(), board.enpassantable, board.castlingRights, turn);
@@ -192,29 +213,79 @@ public class PerformanceTest {
 
         if (turn == playing) {
             int bestScore = Integer.MIN_VALUE;
+            String bestMove = null;
+
+            if (lastFoundBestMove != null) {
+                BitChessBoard newBoard = new BitChessBoard(board);
+                newBoard.makeMove(lastFoundBestMove);
+                int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = lastFoundBestMove;
+                }
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) {
+                    this.tranpositionTable.put(hash, 
+                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+                    return bestScore;
+                }
+            }
+
             for (String move : moves) {
+                if (move.equals(lastFoundBestMove)) {
+                    continue;
+                }
                 BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
-                bestScore = Math.max(bestScore, score);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
                 alpha = Math.max(alpha, score);
                 if (beta <= alpha) {
                     break;
                 }
             }
+            this.tranpositionTable.put(hash, new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
             return bestScore;
         } else {
             int bestScore = Integer.MAX_VALUE;
+            String bestMove = null;
+
+            if (lastFoundBestMove != null) {
+                BitChessBoard newBoard = new BitChessBoard(board);
+                newBoard.makeMove(lastFoundBestMove);
+                int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = lastFoundBestMove;
+                }
+                beta = Math.min(beta, score);
+                if (beta <= alpha) {
+                    this.tranpositionTable.put(hash, 
+                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+                    return bestScore;
+                }
+            }
+
             for (String move : moves) {
+                if (move.equals(lastFoundBestMove)) {
+                    continue;
+                }
                 BitChessBoard newBoard = new BitChessBoard(board);
                 newBoard.makeMove(move);
                 int score = alphaBetaMinimax(d - 1, newBoard, alpha, beta, opposite, playing);
-                bestScore = Math.min(bestScore, score);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
                 beta = Math.min(beta, score);
                 if (beta <= alpha) {
                     break;
                 }
             }
+            this.tranpositionTable.put(hash, new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
             return bestScore;
         }
     }    
