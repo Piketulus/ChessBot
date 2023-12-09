@@ -15,6 +15,7 @@ Read the user manual here: [User Manual](./documentation/user_manual.md)
 - [Project Specification](./documentation/project_specification.md)
 - [User Manual](./documentation/user_manual.md)
 - [Testing Document](./documentation/testing.md)
+- [Implementation Document](./documentation/implementation.md)
 
 Weekly reports:
 - [Week 1](./documentation/week1report.md)
@@ -22,3 +23,4 @@ Weekly reports:
 - [Week 3](documentation/week3report.md)
 - [Week 4](documentation/week4report.md)
 - [Week 5](documentation/week5report.md)
+- [Week 6](documentation/week6report.md)

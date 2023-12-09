@@ -37,7 +37,7 @@ public class PerformanceTest {
 
         
         long startTime = System.nanoTime();
-        String move = pt.nextMove("2rk2r1/pp1nRpBp/8/8/6N1/3P4/PP3PPP/R5K1 b - - 0 23", 8);
+        String move = pt.nextMove("2rk2r1/pp1nRpBp/8/8/6N1/3P4/PP3PPP/R5K1 b - - 0 23", 7);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         System.out.println("Time taken: " + duration + "ms");
@@ -160,7 +160,7 @@ public class PerformanceTest {
             String bestMove = null;
             int bestScore = Integer.MIN_VALUE;
             for (String move : moves) {
-                if (System.currentTimeMillis() - startTime > 5000) {
+                if (System.currentTimeMillis() - startTime > 20000) {
                     return bestFoundMove;
                 }
                 BitChessBoard newBoard = new BitChessBoard(board);
