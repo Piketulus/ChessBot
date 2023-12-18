@@ -110,6 +110,8 @@ public class PiketulusBot implements ChessBot {
      */
     private int alphaBetaMinimax(int d, BitChessBoard board, int alpha, int beta, Side turn, Side playing) {
         
+        String exact = "t";
+
         if (d == 0) {
             return PositionEvaluator.evaluatePosition(board.getBoard(), playing);
         }
@@ -121,7 +123,18 @@ public class PiketulusBot implements ChessBot {
         if (this.tranpositionTable.containsKey(hash)) {
             String[] entry = this.tranpositionTable.get(hash);
             if (Integer.parseInt(entry[2]) >= d) {
-                return Integer.parseInt(entry[1]);
+                if (entry[3].equals("t")) {
+                    return Integer.parseInt(entry[1]);
+                } else if (entry[3].equals("f") && turn == playing) {
+                    alpha = Math.max(alpha, Integer.parseInt(entry[1]));
+                } else {
+                    beta = Math.min(beta, Integer.parseInt(entry[1]));
+                }
+
+                if (beta <= alpha) {
+                    return Integer.parseInt(entry[1]);
+                }
+
             } else {
                 lastFoundBestMove = entry[0];
             }
@@ -156,7 +169,7 @@ public class PiketulusBot implements ChessBot {
                 alpha = Math.max(alpha, score);
                 if (beta <= alpha) {
                     this.tranpositionTable.put(hash, 
-                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d), "f"});
                     return bestScore;
                 }
             }
@@ -174,10 +187,12 @@ public class PiketulusBot implements ChessBot {
                 }
                 alpha = Math.max(alpha, score);
                 if (beta <= alpha) {
+                    exact = "f";
                     break;
                 }
             }
-            this.tranpositionTable.put(hash, new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+            this.tranpositionTable.put(hash, 
+                    new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d), exact});
             return bestScore;
         } else {
             int bestScore = Integer.MAX_VALUE;
@@ -194,7 +209,7 @@ public class PiketulusBot implements ChessBot {
                 beta = Math.min(beta, score);
                 if (beta <= alpha) {
                     this.tranpositionTable.put(hash, 
-                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+                            new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d), "f"});
                     return bestScore;
                 }
             }
@@ -212,10 +227,12 @@ public class PiketulusBot implements ChessBot {
                 }
                 beta = Math.min(beta, score);
                 if (beta <= alpha) {
+                    exact = "f";
                     break;
                 }
             }
-            this.tranpositionTable.put(hash, new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d)});
+            this.tranpositionTable.put(hash, 
+                    new String[]{bestMove, Integer.toString(bestScore), Integer.toString(d), exact});
             return bestScore;
         }
     }
